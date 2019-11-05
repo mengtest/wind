@@ -16,9 +16,10 @@ skynet.start(function()
 	if not skynet.getenv "daemon" then
 		local console = skynet.newservice("console")
 	end
- 
-	dump(db.insert("user", {id = '999', nick = 'xixi'}))
-	dump(db.find_one("user", {id = '123456'}))
+
+	skynet.newservice("test")
+	skynet.newservice("httpd")
+
 
 	skynet.exit()
 end)
