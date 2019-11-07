@@ -17,10 +17,11 @@ skynet.start(function()
 		local console = skynet.newservice("console")
 	end
 
-	skynet.newservice("test")
-	skynet.newservice("httpd")
-
-
+    snax.newservice("webserver", {
+    	host = "0.0.0.0",
+        port = 9005,
+        worker = "web-worker"
+    })
 
 	skynet.exit()
 end)

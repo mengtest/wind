@@ -47,39 +47,41 @@ local function gen_interface(protocol, fd)
 end
 
 
-
-return function(protocol, handler)
-    return function (id)
-        socket.start(id)
-        local interface = gen_interface(protocol, id)
-        if interface.init then
-            interface.init()
-        end
-        -- limit request body size to 8192 (you can pass nil to unlimit)
-        local code, url, method, header, body = httpd.read_request(interface.read, 8192)
-        if code then
-            if code ~= 200 then
-                response(id, interface.write, code)
-            else
-                local path, query = urllib.parse(url)
-
-                if query then
-                    query = urllib.parse_query(query)
-                end
-
-                local r = handler(method, header, path, query, body)
-                response(id, interface.write, code, r)
-            end
-        else
-            if url == sockethelper.socket_error then
-                skynet.error("socket closed")
-            else
-                skynet.error(url)
-            end
-        end
-        socket.close(id)
-        if interface.close then
-            interface.close()
-        end
+local function start(id, handler, protocol)
+    socket.start(id)
+    local interface = gen_interface(protocol or "http", id)
+    if interface.init then
+        interface.init()
     end
+    local ok, err
+    -- limit request body size to 8192 (you can pass nil to unlimit)
+    local code, url, method, header, body = httpd.read_request(interface.read, 8192)
+    if code then
+        if code ~= 200 then
+            response(id, interface.write, code)
+            ok = false
+            err = "code ~= 200"
+        else
+            local path, query = urllib.parse(url)
+
+            if query then
+                query = urllib.parse_query(query)
+            end
+
+            local r = handler(method, header, path, query, body)
+            response(id, interface.write, code, r)
+            ok = true
+        end
+    else
+        ok = false
+        err = (url == sockethelper.socket_error) and "socket closed" or url
+    end
+    socket.close(id)
+    if interface.close then
+        interface.close()
+    end
+    return ok, err
 end
+
+
+return start

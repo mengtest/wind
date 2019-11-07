@@ -8,12 +8,12 @@ local balance = 1
 
 
 function init(conf)
-
+    local instance = conf.instance or skynet.getenv "thread"
     local host = conf.host or "0.0.0.0"
     local port = assert(tonumber(conf.port))
     local worker = assert(conf.worker)
 
-    for i=1,4 do
+    for i=1,instance do
         slave[i] = snax.newservice(worker)
     end
 

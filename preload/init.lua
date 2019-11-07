@@ -1,13 +1,3 @@
-function IN(o, t)
-	for i,v in ipairs(t) do
-		if o == v then
-			return true
-		end
-	end
-
-	return false
-end
-
 local function table_print( t )  
     local print_r_cache={}
     local function sub_print_r(t,indent)

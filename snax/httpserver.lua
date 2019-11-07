@@ -1,3 +1,7 @@
+--
+-- 不建议使用, 请用 webserver.lua 
+--
+
 local skynet = require "skynet"
 require "skynet.manager"
 local socket = require "skynet.socket"
