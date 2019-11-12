@@ -9,8 +9,8 @@ function mongo.insert(...)
     return skynet.call(service_addr, "lua", "insert", ...)
 end
 
-function mongo.delete(...)
-    return skynet.call(service_addr, "lua", "delete", ...)
+function mongo.remove(...)
+    return skynet.call(service_addr, "lua", "remove", ...)
 end
 
 function mongo.find_one(...)
@@ -58,17 +58,17 @@ skynet.start(function()
             return db[coll_name]:insert(obj)
         end
         
-        function command.delete(coll_name, cond_tbl)
-            return db[coll_name]:delete(cond_tbl)
+        function command.remove(coll_name, query)
+            return db[coll_name]:delete(query)
         end
         
-        function command.find_one(coll_name, cond_tbl, fields)
-            return db[coll_name]:findOne(cond_tbl, fields)
+        function command.find_one(coll_name, query, fields)
+            return db[coll_name]:findOne(query, fields)
         end
         
-        function command.find_all(coll_name, selector, fields, sorter, limit, skip)
+        function command.find_all(coll_name, query, fields, sorter, limit, skip)
             local t = {}
-            local it = db[coll_name]:find(selector, fields)
+            local it = db[coll_name]:find(query, fields)
             if not it then
                 return t
             end
@@ -96,8 +96,8 @@ skynet.start(function()
             return t
         end
         
-        function command.update(coll_name, cond_tbl, update_tbl)
-            return db[coll_name]:update(cond_tbl, update_tbl)
+        function command.update(coll_name, query, update, upsert, multi)
+            return db[coll_name]:update(query, update, upsert, multi)
         end
         
         skynet.start(function()

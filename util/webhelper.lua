@@ -66,11 +66,16 @@ local function start(id, handler, protocol)
 
             if query then
                 query = urllib.parse_query(query)
-            end
-
-            local r = handler(method, header, path, query, body)
-            response(id, interface.write, code, r)
-            ok = true
+			end
+						
+			local function close (r)
+				response(id, interface.write, code, r)
+				socket.close(id)
+				if interface.close then
+					interface.close()
+				end
+			end
+			return true, method, header, path, query, body, close
         end
     else
         ok = false

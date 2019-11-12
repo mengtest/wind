@@ -1,3 +1,8 @@
+local skynet = require "skynet"
+
+
+local print = skynet.error
+
 local function table_print( t )  
     local print_r_cache={}
     local function sub_print_r(t,indent)
@@ -29,7 +34,6 @@ local function table_print( t )
     else
         sub_print_r(t,"  ")
     end
-    print()
 end
 
 function dump( ... )
