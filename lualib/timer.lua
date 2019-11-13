@@ -31,33 +31,35 @@ function M.create(delay, func, iteration, on_end)
     return cancel
 end
 
+function M.destroy_all()
+    timers = {}
+end
 
-skynet.init(function()
-    skynet.fork(function()
-        while true do
-            skynet.sleep(10)
 
-            local now = skynet.now()
+skynet.fork(function()
+    while true do
+        skynet.sleep(10)
 
-            for i=#timers, 1, -1 do
-                local timer = timers[i]
-                if timer.next_time <= now then
-                    local c = timer.count + 1
-                    timer.count = c
-                    timer.next_time = timer.next_time + timer.delay
+        local now = skynet.now()
 
-                    timer.func(c)
-                    
-                    if timer.iteration > 0 and timer.iteration == c then
-                        if timer.on_end then
-                            timer.on_end()
-                        end
-                        table.remove(timers, i)
+        for i=#timers, 1, -1 do
+            local timer = timers[i]
+            if timer.next_time <= now then
+                local c = timer.count + 1
+                timer.count = c
+                timer.next_time = timer.next_time + timer.delay
+
+                timer.func(c)
+                
+                if timer.iteration > 0 and timer.iteration == c then
+                    if timer.on_end then
+                        timer.on_end()
                     end
+                    table.remove(timers, i)
                 end
             end
         end
-    end)
+    end
 end)
 
 
