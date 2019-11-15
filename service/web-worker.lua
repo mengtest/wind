@@ -19,7 +19,7 @@ end
 
 
 local unlimited_request = {
-	['/login'] = true
+	['login'] = true
 }
 
 function accept.request(id)
@@ -47,7 +47,7 @@ function accept.request(id)
 			return respone('{"err": "cannot find handler by:'..path..'"}')
 		end
 	
-		if not unlimited_request[path] then
+		if not unlimited_request[underline_path] then
 			local ok, err = auth_token(header.token)
 			if not ok then
 				return respone('{"err": "auth token failed"}')
