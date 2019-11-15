@@ -60,5 +60,4 @@ end
 
 
 function init()
-	dump(request)
 end
