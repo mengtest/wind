@@ -1,6 +1,8 @@
 local miss = require "miss-mongo"
 local mongo = require "db.mongo"
 
+local M = {}
+
 
 local function miss(o)
 	local query = {_id = o._id}
@@ -38,16 +40,14 @@ local function miss(o)
 end
 
 
-local wind = {}
-
-function wind.find_one(coll, ...)
+function M.find_one(coll, ...)
 	local o = mongo.find_one(coll, ...)
 	if o then
 		return miss(o)
 	end
 end
 
-function wind.find_all(coll, ...)
+function M.find_all(coll, ...)
 	local obj_list = mongo.find_all(coll, ...)
 	for i,o in ipairs(obj_list) do
 		obj_list[i] = miss(o)
@@ -56,4 +56,4 @@ function wind.find_all(coll, ...)
 end
 
 
-return wind
+return setmetatable(M, {__index = mongo})
