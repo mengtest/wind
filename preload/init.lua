@@ -1,3 +1,8 @@
+require "preload.db"
+require "preload.error"
+
+
+
 local skynet = require "skynet"
 
 
