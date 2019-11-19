@@ -123,4 +123,16 @@ end)
     service_addr = service.new("mongo-master", mongo_service)
 end)
 
-return mongo
+local function mongo_collection(coll)
+	return setmetatable({}, {__index = function(_, key)
+		return function(...)
+			local f = assert(mongo[key], key)
+			return f(coll, ...)
+		end
+	end})
+end
+
+
+return setmetatable({}, {__index = function(_, coll)
+	return setmetatable({}, {__index = mongo_collection(coll)})
+end})
