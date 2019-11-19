@@ -62,7 +62,6 @@ function table.insert(proxy, index, obj)
 		return table_insert(proxy, index, obj)
 	end
 
-	local len = #proxy
 	local handler = proxy_handler[proxy]
 	local path = proxy_path(proxy)
 	

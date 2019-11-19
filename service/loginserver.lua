@@ -1,7 +1,8 @@
 local skynet = require "skynet"
 local snax = require "skynet.snax"
 local socket = require "skynet.socket"
-
+local token = require "util.token"
+local db = require "wind.mongo"
 
 local slave = {}
 local balance = 1
