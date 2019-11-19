@@ -4,20 +4,21 @@ local mongo = require "db.mongo"
 local M = {}
 
 
-local function miss(o)
+local function miss_one(coll, o)
 	local query = {_id = o._id}
 	local event = {}
+	local collection = mongo[coll]
 
 	function event.assign(k, v)
-		mongo.update(coll, query, {["$set"] = {[k] = v}})
+		collection.update(query, {["$set"] = {[k] = v}})
 	end
 
 	function event.tpush(k, v)
-		mongo.update(coll, query, {["$push"] = {[k] = v}})
+		collection.update(query, {["$push"] = {[k] = v}})
 	end
 
 	function event.tinsert(k, index, v)
-		mongo.update(coll, query, {["$push"] = {
+		collection.update(query, {["$push"] = {
 			[k] = {
 				["$each"] = {v},
 				["$position"] = index
@@ -26,7 +27,7 @@ local function miss(o)
 	end
 
 	function event.tpop(k, i)
-		mongo.update(coll, query, {["$pop"] = {[k] = i}})
+		collection.update(query, {["$pop"] = {[k] = i}})
 	end
 
 	local function handler(e, ...)
@@ -41,19 +42,34 @@ end
 
 
 function M.find_one(coll, ...)
-	local o = mongo.find_one(coll, ...)
+	local o = mongo[coll].find_one(...)
 	if o then
-		return miss(o)
+		return miss_one(coll, o)
 	end
 end
 
 function M.find_all(coll, ...)
-	local obj_list = mongo.find_all(coll, ...)
+	local obj_list = mongo[coll].find_all(...)
 	for i,o in ipairs(obj_list) do
-		obj_list[i] = miss(o)
+		obj_list[i] = miss_one(coll, o)
 	end
 	return obj_list
 end
 
+local function mongo_collection(coll)
+	return setmetatable({}, {__index = function(_, key)
+		return function(...)
+			local f = assert(M[key], key)
+			if f then
+				return f(coll, ...)
+			else
+				return mongo[coll][key](...)
+			end
+		end
+	end})
+end
 
-return setmetatable(M, {__index = mongo})
+
+return setmetatable({}, {__index = function(_, coll)
+	return setmetatable({}, {__index = mongo_collection(coll)})
+end})
