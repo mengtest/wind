@@ -16,7 +16,7 @@ end
 SYSTEM_ERROR = {
 	success            = add{code = 0x0000, desc = "请求成功"},
     unknow             = add{code = 0x0001, desc = "未知错误"},
-    invalid_client     = add{code = 0x0002, desc = "非法客户端"}，
+    invalid_client     = add{code = 0x0002, desc = "非法客户端"},
 	argument           = add{code = 0x0003, desc = "参数错误"},
 	forward            = add{code = 0x0004, desc = "协议转发"},
 	decode_failure     = add{code = 0x0005, desc = "解析协议失败"},

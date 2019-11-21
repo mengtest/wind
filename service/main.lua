@@ -10,10 +10,7 @@ skynet.start(function()
 	skynet.error(os.date("%Y/%m/%d %H:%M:%S ")..server_conf.name.." start")
 	skynet.error("=============================================")
 
-	snax.newservice("loginserver", {
-		port = 9005,
-		worker = "loginworker"
-	})
+	skynet.newservice("game")
 
 	if not skynet.getenv "daemon" then
 		local console = skynet.newservice("console")

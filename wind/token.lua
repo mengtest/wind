@@ -22,11 +22,16 @@ local function token_auth(t)
         local u = db.user.find_one({id = pid})
         if u and u.token == t then
             if os.time() - time <= 15*60 then
-                return true, u
+                return true, nil, u
+            else
+                return false, AUTH_ERROR.token_expires
             end
+        else
+            return false, AUTH_ERROR.invalid_token
         end
+    else
+        return false, AUTH_ERROR.invalid_token
     end
-    return false
 end
 
 return {
