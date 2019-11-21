@@ -59,7 +59,7 @@ end
 local function mongo_collection(coll)
 	return setmetatable({}, {__index = function(_, key)
 		return function(...)
-			local f = assert(M[key], key)
+			local f = M[key]
 			if f then
 				return f(coll, ...)
 			else

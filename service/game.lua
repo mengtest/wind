@@ -11,6 +11,10 @@ local server = {
     protocol = "http"
 }
 
+--
+-- slave
+--
+
 local request = {}
 
 
@@ -27,6 +31,18 @@ function request:login()
 	else
 		return {err = AUTH_ERROR.player_not_exist}
 	end
+end
+
+function request:register()
+	local u = {
+		id = assert(self.id),
+		nick = assert(self.nick),
+		gold = 0,
+		token = token.encode(self.id, os.time())
+	}
+
+	db.user.insert(u)
+	return u
 end
 
 
@@ -79,6 +95,9 @@ function server.request_handler(method, header, path, query, body)
 	end
 end
 
+--
+-- master
+--
 
 local command = {}
 
