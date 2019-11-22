@@ -56,20 +56,27 @@ function M.find_all(coll, ...)
 	return obj_list
 end
 
-local function mongo_collection(coll)
-	return setmetatable({}, {__index = function(_, key)
-		return function(...)
-			local f = M[key]
-			if f then
-				return f(coll, ...)
-			else
-				return mongo[coll][key](...)
-			end
-		end
-	end})
+
+local cache = {}
+
+local function collection(coll)
+    local c = cache[coll]
+    if not c then
+        c = setmetatable({}, {__index = setmetatable({}, {__index = function (_, k)
+            return function (...)
+				local f = M[k]
+				if f then
+					return f(coll, ...)
+				else
+					return mongo[coll][k](...)
+				end
+            end
+        end})})
+        cache[coll] = c
+    end
+    return c
 end
 
-
 return setmetatable({}, {__index = function(_, coll)
-	return setmetatable({}, {__index = mongo_collection(coll)})
+    return collection(coll)
 end})

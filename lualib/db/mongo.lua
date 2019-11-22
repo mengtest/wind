@@ -25,6 +25,9 @@ function mongo.update(...)
     return skynet.call(service_addr, "lua", "update", ...)
 end
 
+function mongo.sum(...)
+    return skynet.call(service_addr, "lua", "sum", ...)
+end
 
 skynet.init(function()
     local mongo_service = function()
@@ -99,7 +102,26 @@ skynet.start(function()
         function command.update(coll_name, query, update, upsert, multi)
             return db[coll_name]:update(query, update, upsert, multi)
         end
-        
+
+        function command.sum(coll_name, query, key)
+            local pipeline = {}
+            if query then
+                table.insert(pipeline,{["$match"] = query_tbl})
+            end
+           
+            table.insert(pipeline,{["$group"] = {_id = false, [key] = {["$sum"] = "$" .. key}}})
+           
+            local result = db:runCommand("aggregate", coll_name, "pipeline", pipeline, "cursor", {}, "allowDiskUse", true)
+
+            if result and result.ok and result.ok == 1 then
+                if result.cursor and result.cursor.firstBatch then
+                    local r = result.cursor.firstBatch[1]
+                    return r and r[key] or 0
+                end
+            end
+            return 0
+        end
+
         skynet.start(function()
             skynet.dispatch("lua", function (_, _, cmd, ...)
                 local f = assert(command[cmd], cmd)
@@ -123,16 +145,23 @@ end)
     service_addr = service.new("mongo-master", mongo_service)
 end)
 
-local function mongo_collection(coll)
-	return setmetatable({}, {__index = function(_, key)
-		return function(...)
-			local f = assert(mongo[key], key)
-			return f(coll, ...)
-		end
-	end})
+
+local cache = {}
+
+local function collection(coll)
+    local c = cache[coll]
+    if not c then
+        c = setmetatable({}, {__index = setmetatable({}, {__index = function (_, k)
+            return function (...)
+                local f = assert(mongo[k], k)
+                return f(coll, ...)
+            end
+        end})})
+        cache[coll] = c
+    end
+    return c
 end
 
-
 return setmetatable({}, {__index = function(_, coll)
-	return setmetatable({}, {__index = mongo_collection(coll)})
+    return collection(coll)
 end})

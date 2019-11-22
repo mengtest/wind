@@ -5,6 +5,9 @@ local base64encode = crypt.base64encode
 local base64decode = crypt.base64decode
 
 
+local EXPIRES_TIME = 15 * 60
+
+
 local function token_encode(pid, time)
 	return base64encode(pid).."#"..base64encode(time)
 end
@@ -21,7 +24,7 @@ local function token_auth(t)
     if time then
         local u = db.user.find_one({id = pid})
         if u and u.token == t then
-            if os.time() - time <= 15*60 then
+            if os.time() - time <= EXPIRES_TIME then
                 return true, nil, u
             else
                 return false, AUTH_ERROR.token_expires

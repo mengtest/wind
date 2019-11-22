@@ -18,31 +18,32 @@ local server = {
 local request = {}
 
 
-function request:login()
-	local u = db.user.find_one({id = self.id})
-	if u then
-		local t = token.encode(self.id, os.time())
-		u.token = t
-		return {
-			token = t,
-			id = u.id,
-			nick = u.nick
-		}
-	else
-		return {err = AUTH_ERROR.player_not_exist}
-	end
-end
-
-function request:register()
+local function register(id)
 	local u = {
-		id = assert(self.id),
-		nick = assert(self.nick),
+		id = assert(id),
 		gold = 0,
-		token = token.encode(self.id, os.time())
+		diamond = 0,
 	}
 
 	db.user.insert(u)
 	return u
+end
+
+
+function request:login()
+	local u = db.user.find_one({id = self.id})
+	if not u then
+		u = register(self.id)
+	end
+
+	u.token = token.encode(self.id, os.time())
+
+	return {
+		token = u.token,
+		id = u.id,
+		gold = u.gold,
+		diamond = u.diamond
+	}
 end
 
 
@@ -51,7 +52,6 @@ local unknow_error = string.format('{"err":%d}', SYSTEM_ERROR.unknow)
 
 local unneed_auth_request = {
 	["login"] = true,
-	["register"] = true,
 }
 
 
