@@ -10,11 +10,12 @@ skynet.start(function()
 	skynet.error(os.date("%Y/%m/%d %H:%M:%S ")..server_conf.name.." start")
 	skynet.error("=============================================")
 
+	skynet.newservice("debug_console", 9001)
 	skynet.newservice("game")
 
 	if not skynet.getenv "daemon" then
 		local console = skynet.newservice("console")
 	end
-	
+
 	skynet.exit()
 end)

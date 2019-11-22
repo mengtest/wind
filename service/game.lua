@@ -29,7 +29,6 @@ local function register(id)
 	return u
 end
 
-
 function request:login()
 	local u = db.user.find_one({id = self.id})
 	if not u then

@@ -2,3 +2,5 @@
 .vscode/sftp.json
 sftp-config.json
 skynet/
+hotfix/
+service/test.lua
