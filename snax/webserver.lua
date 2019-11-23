@@ -48,6 +48,13 @@ local function gen_interface(protocol, fd)
 end
 
 
+local cross_origin = {
+	["access-control-allow-origin"] = "*",
+	["access-control-allow-methods"] = "GET, POST",
+	["access-control-allow-headers"] = "x-requested-with,content-type",
+	["content-type"] = "application/json"
+}
+
 local function launch_slave(request_handler, protocol)
     skynet.dispatch("lua", function (_,_,id)
         socket.start(id)
@@ -68,7 +75,7 @@ local function launch_slave(request_handler, protocol)
                 end
 
                 local r = request_handler(method, header, path, query, body)
-                response(id, interface.write, code, r)
+                response(id, interface.write, code, r, cross_origin)
             end
         else
             if url == sockethelper.socket_error then

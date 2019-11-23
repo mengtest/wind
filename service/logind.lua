@@ -6,8 +6,8 @@ local token = require "wind.token"
 
 local server = {
     host = "0.0.0.0",
-    port = 9002,
-    name = "game_master",
+    port = 9011,
+    name = "login_master",
     protocol = "http"
 }
 
@@ -18,30 +18,31 @@ local server = {
 local request = {}
 
 
-local function register(id)
-	local u = {
-		id = assert(id),
-		gold = 0,
-		diamond = 0,
-	}
+local function register(id, token)
+	db.wind_user.insert {id = id, token = token}
 
-	db.user.insert(u)
-	return u
+	-- todo: init your user here
+	db.user.insert {
+		id = id,
+		gold = 50000,
+		diamond = 0
+	}
 end
 
 function request:login()
-	local u = db.user.find_one({id = self.id})
-	if not u then
-		u = register(self.id)
+	local pid = assert(self.id)
+	local t = token.encode(pid, os.time())
+
+	local u = db.wind_user.miss_find_one({id = pid})
+	if u then
+		u.token = t
+	else
+		register(pid, t)
 	end
 
-	u.token = token.encode(self.id, os.time())
-
 	return {
-		token = u.token,
-		id = u.id,
-		gold = u.gold,
-		diamond = u.diamond
+		id = pid,
+		token = t
 	}
 end
 
@@ -55,6 +56,7 @@ local unneed_auth_request = {
 
 
 function server.request_handler(method, header, path, query, body)
+	print(path, body)
 	if method == 'GET' then
 		return invalid_client_error
 	end
@@ -84,7 +86,7 @@ function server.request_handler(method, header, path, query, body)
 		u = user
 	end
 
-	local ok, r = pcall(req, args, u)
+	local ok, r = pcall(req, args or {}, u)
 	if ok then
 		assert(type(r) == 'table')
 		return cjson.encode(r)

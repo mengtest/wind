@@ -22,10 +22,10 @@ end
 local function token_auth(t)
     local pid, time = token_decode(t)
     if time then
-        local u = db.user.find_one({id = pid})
+        local u = db.wind_user.find_one({id = pid})
         if u and u.token == t then
             if os.time() - time <= EXPIRES_TIME then
-                return true, nil, u
+                return true, nil, pid
             else
                 return false, AUTH_ERROR.token_expires
             end

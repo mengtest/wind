@@ -58,7 +58,8 @@ skynet.start(function()
         local command = {}
         
         function command.insert(coll_name, obj)
-            return db[coll_name]:insert(obj)
+            db[coll_name]:insert(obj)
+            return obj._id
         end
         
         function command.remove(coll_name, query)

@@ -1,5 +1,5 @@
 local miss = require "miss-mongo"
-local mongo = require "db.mongo"
+local db = require "db.mongo"
 
 local M = {}
 
@@ -7,7 +7,7 @@ local M = {}
 local function miss_one(coll, o)
 	local query = {_id = o._id}
 	local event = {}
-	local collection = mongo[coll]
+	local collection = db[coll]
 
 	function event.assign(k, v)
 		collection.update(query, {["$set"] = {[k] = v}})
@@ -41,21 +41,25 @@ local function miss_one(coll, o)
 end
 
 
-function M.find_one(coll, ...)
-	local o = mongo[coll].find_one(...)
+function M.miss_find_one(coll, ...)
+	local o = db[coll].find_one(...)
 	if o then
 		return miss_one(coll, o)
 	end
 end
 
-function M.find_all(coll, ...)
-	local obj_list = mongo[coll].find_all(...)
+function M.miss_find_all(coll, ...)
+	local obj_list = db[coll].find_all(...)
 	for i,o in ipairs(obj_list) do
 		obj_list[i] = miss_one(coll, o)
 	end
 	return obj_list
 end
 
+function M.miss_insert(coll, o)
+	o._id = db[coll].insert(o)
+	return miss_one(coll, o)
+end
 
 local cache = {}
 
@@ -68,7 +72,7 @@ local function collection(coll)
 				if f then
 					return f(coll, ...)
 				else
-					return mongo[coll][k](...)
+					return db[coll][k](...)
 				end
             end
         end})})
