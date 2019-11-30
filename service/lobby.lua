@@ -4,6 +4,7 @@ local wsserver = require "snax.wsserver"
 local cjson = require "cjson"
 local token = require "wind.token"
 local db = require "wind.mongo"
+local timer = require "wind.timer"
 
 local server = {
     name = "lobby_master",
@@ -30,6 +31,11 @@ function request:handshake(id)
         local u = db.user.miss_find_one({id = pid})
         user[id] = u
         user[pid] = u
+
+        timer.create(500, function()
+            websocket.write(id, cjson.encode{"hi", {msg = "what's your name?"}})
+        end)
+
         return table.filter(u, {_id = false})
     end
 end
@@ -51,21 +57,20 @@ local function parse_msg(msg)
         return false
     end
 
-    local cmd, args = data[1], data[2]
+    local id, cmd, args = data[1], data[2], data[3]
     if not cmd or not request[cmd] then
         return false 
     end
-    return cmd, args
+    return id, cmd, args
 end
 
 local invalid_client = string.format('{"err":%d}', SYSTEM_ERROR.invalid_client)
 local unknow_error = string.format('{"err":%d}', SYSTEM_ERROR.unknow)
 
 function handle.message(id, msg)
-    print(msg)
     local u = user[id]
-    local cmd, args = parse_msg(msg)
-    if not cmd or (not u and cmd ~= "handshake") then
+    local msg_id, cmd, args = parse_msg(msg)
+    if not msg_id or (not u and cmd ~= "handshake") then
         websocket.write(id, invalid_client)
         websocket.close(id)
     else
@@ -73,8 +78,9 @@ function handle.message(id, msg)
         local ok, r = pcall(f, args, u or id, id)
         if ok then
             assert(type(r) == 'table', r)
-            websocket.write(id, cjson.encode(r))
+            websocket.write(id, cjson.encode({msg_id, r}))
         else
+            skynet.error(r)
             websocket.write(id, unknow_error)
         end
     end

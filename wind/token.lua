@@ -20,6 +20,9 @@ local function token_decode(t)
 end
 
 local function token_auth(t)
+    if not t then
+        return false, AUTH_ERROR.invalid_token
+    end
     local pid, time = token_decode(t)
     if time then
         local u = db.wind_user.find_one({id = pid})
