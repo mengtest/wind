@@ -65,7 +65,6 @@ local function parse_msg(msg)
 end
 
 local invalid_client = string.format('{"err":%d}', SYSTEM_ERROR.invalid_client)
-local unknow_error = string.format('{"err":%d}', SYSTEM_ERROR.unknow)
 
 function handle.message(id, msg)
     local u = user[id]
@@ -78,10 +77,10 @@ function handle.message(id, msg)
         local ok, r = pcall(f, args, u or id, id)
         if ok then
             assert(type(r) == 'table', r)
-            websocket.write(id, cjson.encode({msg_id, r}))
+            websocket.write(id, cjson.encode{msg_id, r})
         else
             skynet.error(r)
-            websocket.write(id, unknow_error)
+            websocket.write(id, cjson.encode{msg_id, {err = SYSTEM_ERROR.unknow}})
         end
     end
 end
