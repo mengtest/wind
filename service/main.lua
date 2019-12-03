@@ -2,6 +2,7 @@ local skynet = require "skynet"
 require "skynet.manager"
 local snax = require "skynet.snax"
 local server_conf = require "config.server"
+local kvdb = require "wind.kvdb"
 
 skynet.start(function()
 
@@ -14,9 +15,14 @@ skynet.start(function()
 		local console = skynet.newservice("console")
 	end
 
+	kvdb.user.set("windy", "logined")
+	kvdb.user.set("xixi", "hi xixi")
+
+
 	skynet.newservice("debug_console", 9999)
 	skynet.newservice("logind")
 	skynet.newservice("lobby")
+	skynet.newservice("game")
 
 	
 	skynet.exit()

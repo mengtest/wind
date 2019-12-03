@@ -1,6 +1,7 @@
 local skynet = require "skynet"
 local socket = require "skynet.socket"
 local websocket = require "http.websocket"
+local kvdb = require "wind.kvdb"
 
 
 local user = {}
@@ -10,7 +11,7 @@ function handle.connect(id)
     print("ws connect from: " .. tostring(id))
 end
 
-function handle.message(id, msg)
+function handle.message(id, msg) 
     websocket.write(id, msg)
 end
 

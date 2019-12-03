@@ -1,24 +1,31 @@
 local skynet = require "skynet"
 local service = require "skynet.service"
 
-local function kvdb_service()
-	local skynet = require "skynet"
-	local db = {}
+local master
 
-	local command = {}
+skynet.init(function()
+    local kvdb_master_service = function()
+-- kvdb-master service
 
-	function command.get(key)
-		return db[key]
-	end
+local skynet = require "skynet"
 
-	function command.set(key, value)
-		db[key] = value
-	end
+local db = {}
 
-	skynet.dispatch("lua", function(session, address, cmd, ...)
-		skynet.ret(skynet.pack(command[cmd](...)))
-	end)
-end
+skynet.start(function() 
+    skynet.dispatch("lua", function(_,_, name)
+		if not db[name] then
+			db[name] = skynet.newservice("kvdb")
+		end
+        skynet.ret(skynet.pack(db[name]))
+    end)
+end)
+
+-- end of kvdb-master service
+    end
+
+    master = service.new("kvdb-master", kvdb_master_service)
+end)
+
 
 
 local cache = {}
@@ -26,22 +33,22 @@ local cache = {}
 local function query_db(db_name)
 	local db = cache[db_name]
 	if not db then
-		local service_addr = service.new(db_name, kvdb_service)
+		local service_addr = skynet.call(master, "lua", db_name)
 		db = {}
 
 		function db.set(k, v)
-			skynet.call(service_addr, "lua", "set", k, v)
+			return skynet.call(service_addr, "lua", k, v)
 		end
 
 		function db.get(k)
-			return skynet.call(service_addr, "lua", "get", k)
+			return skynet.call(service_addr, "lua", k)
 		end
+
 		cache[db_name] = db
 	end
 	return db
 end
 
-
 return setmetatable({}, {__index = function (_, db_name)
-	return query_db('kvdb-'..db_name)
+	return query_db(db_name)
 end})
