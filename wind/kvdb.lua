@@ -1,11 +1,11 @@
 local skynet = require "skynet"
 local service = require "skynet.service"
 
-local master
+local manager
 
 skynet.init(function()
-    local kvdb_master_service = function()
--- kvdb-master service
+    local kvdb_manager_service = function()
+-- kvdb-manager service
 
 local skynet = require "skynet"
 
@@ -20,10 +20,10 @@ skynet.start(function()
     end)
 end)
 
--- end of kvdb-master service
+-- end of kvdb-manager service
     end
 
-    master = service.new("kvdb-master", kvdb_master_service)
+    manager = service.new("kvdb-manager", kvdb_manager_service)
 end)
 
 
@@ -33,7 +33,7 @@ local cache = {}
 local function query_db(db_name)
 	local db = cache[db_name]
 	if not db then
-		local service_addr = skynet.call(master, "lua", db_name)
+		local service_addr = skynet.call(manager, "lua", db_name)
 		db = {}
 
 		function db.set(k, v)
