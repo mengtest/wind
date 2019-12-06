@@ -21,13 +21,41 @@ skynet.init(function()
 local skynet = require "skynet"
 local db = require "wind.mongo"
 
+local function create_sequential_num(name, persistent, start_num)
+    local doc
+    if persistent then
+        doc = db.wind_uniqueid.miss_find_one {name = name}
+        if doc then
+            assert(doc.type == "sequential_num")
+        else
+            doc = db.wind_uniqueid.miss_insert {name = name, type = "sequential_num", start = start_num, last = start_num}
+        end
+    else
+        doc = {name = name, start = start_num, last = start_num}
+    end
+
+    local self = {}
+    
+    function self.gen()
+        doc.last = doc.last + 1
+        local id = tostring(doc.last)
+        return id
+    end
+
+    function self.free(id)
+        -- pass     
+    end
+    return self
+end
 
 local function create_random_num(name, persistent, length)
     local doc
     if persistent then
         doc = db.wind_uniqueid.miss_find_one {name = name}
-        if not doc then
-            doc = db.wind_uniqueid.miss_insert {name = name, generated = {}}
+        if doc then
+            assert(doc.type == "random_num")
+        else
+            doc = db.wind_uniqueid.miss_insert {name = name, type = "random_num", generated = {}}
         end
     else
         doc = {name = name, generated = {}}
@@ -55,8 +83,10 @@ local function create_day_index(name, persistent, index_length)
     local doc
     if persistent then
         doc = db.wind_uniqueid.miss_find_one {name = name}
-        if not doc then
-            doc = db.wind_uniqueid.miss_insert {name = name, day = os.date("%Y%m%d"), index = 0}
+        if doc then
+            assert(doc.type == "day_index")
+        else
+            doc = db.wind_uniqueid.miss_insert {name = name, type = "day_index", day = os.date("%Y%m%d"), index = 0}
         end
     else
         doc = {name = name, day = os.date("%Y%m%d"), index = 0}
@@ -105,6 +135,7 @@ local function init()
     generator.userid = create_random_num("userid", true, 6)
     generator.roomid = create_random_num("roomid", false, 6)
     generator.mailid = create_day_index("mailid", true, 6)
+    generator.gameid = create_sequential_num("gameid", false, 100000)
 end
 
 skynet.start(function() 
