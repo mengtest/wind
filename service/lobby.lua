@@ -7,6 +7,7 @@ local token = require "wind.token"
 local db = require "wind.mongo"
 local kvdb = require "wind.kvdb"
 local timer = require "wind.timer"
+local matchd = require "matchd"
 
 local server = {
     name = "lobby_master",
@@ -46,7 +47,7 @@ function request:handshake(id)
                 r.room = room_info
             else
                 -- room maybe has been dissolved
-                u.room = nil
+                u.room_addr = nil
                 kvdb.user_room.set(pid, nil)
                 skynet.error("try join room err"..room_info)
             end
@@ -66,13 +67,8 @@ function request:start_match(u)
     if u.room_addr then
         return {err = GAME_ERROR.in_other_room}
     else
-        local ok, room_addr, room_info = skynet.call("match", u.base)
-        if ok then
-            u.room_addr = room_addr
-            return room_info
-        else
-            return {err = room_addr}
-        end
+        matchd.start_match{id = u.id, addr = skynet.self()}
+        return {}
     end
 end
 

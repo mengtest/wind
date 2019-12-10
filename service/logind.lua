@@ -58,7 +58,7 @@ local unneed_auth_request = {
 function server.request_handler(method, header, path, query, body)
 	print(path, body)
 	if method == 'GET' then
-		return invalid_client_error
+		return invalid_client
 	end
 
 	local cmd, args, u

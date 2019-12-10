@@ -1,13 +1,47 @@
 local skynet = require "skynet"
 local lock = (require "skynet.queue")()
 -----------------------------------------------------------------
+local db = require "wind.mongo"
 local room = {}
 
 -- UTIL
-local function room_init(conf)
+local function send_push(p, name, args)
+    skynet.send(p.addr, "lua", "send_push", name, args)
+end
+
+local function room_radio(name, args)
+    for _,p in ipairs(room.players) do
+        send_push(p, name, args)
+    end
+end
+
+local function room_info()
+    local r = {
+        id = room.id,
+        players = {}
+    }
+    for _,p in ipairs(room.players) do
+        table.insert(r.players, {
+            id = p.id,
+            nickname = p.base.nickname,
+            gold = p.base.gold
+        })
+    end
+    return r
+end
+
+local function room_init(conf, players)
     room.conf = conf
     room.id = assert(conf.roomid)
     room.players = {}
+    if players then
+        for i,p in ipairs(players) do
+            p.chair = i
+            p.base = db.user.miss_find_one{id = p.id}
+            table.insert(room.players, p)
+        end
+        room_radio("join_room", room_info())
+    end
 end
 
 local function find(pid)
@@ -21,7 +55,7 @@ end
 -- REQUEST START
 local request = {}
 
-function request:leave(pid)
+function request:ready(pid)
     local p = find(pid)
 end
 -----------------------------------------------------------------
@@ -36,8 +70,8 @@ end
 function commond.join(u)
 end
 
-function commond.init(conf)
-    room_init(self)
+function commond.init(conf, players)
+    room_init(self, players)
 end
 
 skynet.start(function()
