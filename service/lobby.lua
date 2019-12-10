@@ -1,9 +1,11 @@
 local skynet = require "skynet"
+require "skynet.queue"
 local websocket = require "http.websocket"
 local wsserver = require "snax.wsserver"
 local cjson = require "cjson"
 local token = require "wind.token"
 local db = require "wind.mongo"
+local kvdb = require "wind.kvdb"
 local timer = require "wind.timer"
 
 local server = {
@@ -17,6 +19,7 @@ local server = {
 -- slave
 --
 local user = {}
+local lock = {}
 
 local request = {}
 
@@ -28,24 +31,49 @@ function request:handshake(id)
         end)
         return {err = err}
     else
-        local u = db.user.miss_find_one({id = pid})
+        local base = db.user.miss_find_one({id = pid})
+        local u = {
+            sock_id = id,
+            base = base,
+            room_addr = kvdb.user_room.get(pid)
+        }
         user[id] = u
         user[pid] = u
-
-        timer.create(500, function()
-            websocket.write(id, cjson.encode{"hi", {msg = "what's your name?"}})
-        end)
-
-        return table.filter(u, {_id = false})
+        local r = table.filter(base, {_id = false}
+        if u.room_addr then
+            local ok, room_info = pcall(skynet.call, u.room_addr, "lua", "join", pid)
+            if ok then
+                r.room = room_info
+            else
+                -- room maybe has been dissolved
+                u.room = nil
+                kvdb.user_room.set(pid, nil)
+                skynet.error("try join room err"..room_info)
+            end
+        end
+        return r
     end
 end
 
+--[[
 function request:create_room(u)
-
 end
 
 function request:join_room(u)
+end]]
 
+function request:start_match(u)
+    if u.room_addr then
+        return {err = GAME_ERROR.in_other_room}
+    else
+        local ok, room_addr, room_info = skynet.call("match", u.base)
+        if ok then
+            u.room_addr = room_addr
+            return room_info
+        else
+            return {err = room_addr}
+        end
+    end
 end
 
 
@@ -73,24 +101,36 @@ function handle.message(id, msg)
         websocket.write(id, invalid_client)
         websocket.close(id)
     else
-        local f = request[cmd]
-        local ok, r = pcall(f, args, u or id, id)
-        if ok then
-            assert(type(r) == 'table', r)
-            websocket.write(id, cjson.encode{msg_id, r})
-        else
-            skynet.error(r)
-            websocket.write(id, cjson.encode{msg_id, {err = SYSTEM_ERROR.unknow}})
-        end
+        local lk = lock[id]
+        lk(function()
+            local f = request[cmd]
+            if f then
+                local ok, r = pcall(f, args, u or id)
+                if ok then
+                    assert(type(r) == 'table', r)
+                    websocket.write(id, cjson.encode{msg_id, r})
+                else
+                    skynet.error(r)
+                    websocket.write(id, cjson.encode{msg_id, {err = SYSTEM_ERROR.unknow}})
+                end
+            else
+                assert(u)
+                if u.room_addr then
+                    skynet.send(u.room_addr, "lua", "player_request", {action = cmd, args = args})
+                end
+            end
+        end)
     end
 end
 
 function handle.connect(id)
     print("ws connect from: " .. tostring(id))
+    lock[id] = skynet.queue()
 end
 
 function handle.close(id, code, reason)
     print("ws close from: " .. tostring(id), code, reason)
+    lock[id] = nil
 end
 
 function handle.error(id)

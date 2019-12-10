@@ -1,7 +1,7 @@
 local skynet = require "skynet"
 require "skynet.manager"
 local service = require "skynet.service"
-local miss = require "wind.miss-mongo"
+local miss = require "miss-mongo"
 
 local mongo = {}
 local service_addr
