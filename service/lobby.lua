@@ -40,7 +40,7 @@ function request:handshake(id)
         }
         user[id] = u
         user[pid] = u
-        local r = table.filter(base, {_id = false}
+        local r = table.filter(base, {_id = false})
         if u.room_addr then
             local ok, room_info = pcall(skynet.call, u.room_addr, "lua", "join", pid)
             if ok then
