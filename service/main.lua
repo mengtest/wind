@@ -16,8 +16,8 @@ skynet.start(function()
 
 
 	skynet.newservice("debug_console", 9999)
-	skynet.newservice("logind")
-	skynet.newservice("lobby")
+	skynet.newservice("admin")
+	-- skynet.newservice("lobby")
 
 	
 	skynet.exit()

@@ -4,19 +4,6 @@ local web = require "snax.webserver"
 local db = require "wind.mongo"
 local token = require "wind.token"
 
-
-
-local function register(id, token)
-	db.wind_user.insert {id = id, token = token}
-
-	-- todo: init your user here
-	db.user.insert {
-		id = id,
-		gold = 50000,
-		diamond = 0
-	}
-end
-
 ------------------------------------------------------------------------
 -- request
 ------------------------------------------------------------------------
@@ -24,23 +11,27 @@ end
 local request = {}
 
 function request:login()
-	local pid = assert(self.id)
-	local t = token.encode(pid, os.time())
-	local u = db.wind_user.miss_find_one({id = pid})
-	if u then
-		u.token = t
-	else
-		register(pid, t)
+	local account = assert(self.account)
+	local password = assert(self.password)
+	
+	local u = db.admin_user.miss_find_one {account = account}
+	if not u then
+		return {err = "account non-existent"}
 	end
-	return {
-		id = pid,
-		token = t
-	}
+	if password ~= u.password then
+		return {err = "bad password"}
+	end
+	local t = token.encode(account)
+	
+	return {token = t}
 end
 
 function request:test()
+	local account, err = token.auth(self.token) 
 	return {
-		msg = "hello i'm loginserver"
+		msg = "hello i'm wind-admin",
+		account = account,
+		err = err
 	}
 end
 
@@ -54,7 +45,7 @@ function commond.hello()
 end
 
 web {
-    name = "logind-master",
+    name = "admin-master",
     host = "0.0.0.0",
     port = 9011,
     protocol = "http",
