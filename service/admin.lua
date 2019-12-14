@@ -26,6 +26,14 @@ function request:login()
 	return {token = t}
 end
 
+function request:refresh_token()
+	local t, err = token.refresh(assert(self.token))
+	return {
+		token = t,
+		err = err
+	}
+end
+
 function request:test()
 	local account, err = token.auth(self.token) 
 	return {
