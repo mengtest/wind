@@ -1,0 +1,23 @@
+local skynet = require "skynet"
+local websocket = require "http.websocket"
+local cjson = require "cjson"
+local ws_id
+
+local function send_request(cmd, args)
+    websocket.write(ws_id, cjson.encode{cmd, args})
+    skynet.sleep(10)
+    local resp, close_reason = websocket.read(ws_id)
+    print("server: " .. (resp and resp or "[Close] " .. close_reason))
+end
+
+
+
+local function connect()
+    ws_id = websocket.connect("ws://127.0.0.1:9013")
+    send_request("login")
+end
+
+
+skynet.start(function()
+    connect()
+end)

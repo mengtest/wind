@@ -21,7 +21,7 @@ function request:login()
 	if password ~= u.password then
 		return {err = "bad password"}
 	end
-	local t = token.encode(account)
+	local t = token.gen(account)
 	
 	return {token = t}
 end

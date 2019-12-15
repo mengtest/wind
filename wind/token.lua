@@ -1,6 +1,7 @@
 --[[
     设计:
-    1.调用 encode 生成一个 token, 有效期2天(可自定义), 之后可以调用 refresh(token), 每次刷新都会返回一个新的 token(刷新次数会增加, token有效期还是2天)
+    1.调用 encode 生成一个 token, 有效期2天(可自定义), 之后可以调用 refresh(token),
+        每次刷新都会返回一个新的 token(刷新次数会增加, token有效期还是2天)
     2.客户端启动:
         1. 本地没有 token, 走登录流程 拿到token
         2. 本地有 token, 发一个 refresh_token 协议:
@@ -20,8 +21,8 @@ local base64decode = crypt.base64decode
 local token = {}
 local service_addr
 
-function token.encode(id)
-	return skynet.call(service_addr, "lua", "create", id)
+function token.gen(id)
+	return skynet.call(service_addr, "lua", "gen", id)
 end
 
 function token.decode(t)
@@ -74,7 +75,7 @@ local user = {}    -- id -> {old_token, cur_token, db_obj}
 
 local commond = {}
 
-function commond.create(id)
+function commond.gen(id)
     local now = os.time()
     local expires_time = now + EXPIRES_TIME
     local t = encode(id, now)
@@ -131,7 +132,7 @@ function commond.auth(t)
         return nil, AUTH_ERROR.invalid_token
     end
 
-    if t == u[1] or t == u[2] then
+    if t == u[2] or t == u[1] then
         if now - time <= EXPIRES_TIME then
             return id, time, refresh_times
         else
