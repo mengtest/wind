@@ -14,7 +14,9 @@ end
 
 local function connect()
     ws_id = websocket.connect("ws://127.0.0.1:9013")
-    send_request("login")
+    send_request("login", {id = "123456"})
+    skynet.sleep(100)
+    send_request("start_match")
 end
 
 

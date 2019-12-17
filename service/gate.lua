@@ -23,20 +23,23 @@ if MODE == "agent" then
     local client = {}
     local request = {}
 
-    function request:login()
+    function request:login(fd)
+        local c = client[fd]
+        c.agent = skynet.newservice("agent")
+        skynet.call(c.agent, "lua", "start", fd, assert(self.id))
         return {ok = true}
     end
 
-    function request:handshake()
+    function request:handshake(fd)
         return {ok = true}
     end
 
-    function handle.connect(id)
-        client[id] = {
+    function handle.connect(fd)
+        client[fd] = {
             connected = true,
             logined = false
         }
-        print("ws connect from: " .. tostring(id))
+        print("ws connect from: " .. tostring(fd))
     end
 
     function handle.message(id, msg)
@@ -51,10 +54,9 @@ if MODE == "agent" then
 
         local c = client[id]
         if c.agent then
-            local r = skynet.call(c.agent, "lua", "client", msg)
-            if r then
-                websocket.write(id, r)
-            end
+            local response = skynet.call(c.agent, "lua", "client", msg)
+            print("response:", response)
+            websocket.write(id, response)
         else
             local ok, cmd, args = pcall(unpack_message, msg)
             if not ok then
@@ -66,7 +68,7 @@ if MODE == "agent" then
                 return close_client("invalid cmd:"..tostring(cmd))
             end
 
-            local ok, r = pcall(f, args)
+            local ok, r = pcall(f, args, id)
             if not ok then
                 return close_client(r)
             end
