@@ -1,3 +1,0 @@
-COLL = {
-    user = "user"
-}
