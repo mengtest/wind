@@ -31,8 +31,3 @@ bootstrap = "snlua bootstrap"	-- The service for bootstrap
 if $DAEMON then
 	daemon = "./skynet.pid"
 end
-
-
--- user config
-httpserver_port = 9000
-httpserver_wx_port = 9001
