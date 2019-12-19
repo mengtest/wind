@@ -1,0 +1,3 @@
+COLL = {
+    user = "user"
+}

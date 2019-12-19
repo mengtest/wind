@@ -14,8 +14,8 @@ skynet.start(function()
 		local console = skynet.newservice("console")
 	end
 
-
 	skynet.newservice("debug_console", 9999)
+	skynet.newservice("login")
 
 	
 	skynet.exit()
