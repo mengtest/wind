@@ -1,11 +1,11 @@
 local skynet = require "skynet"
 local web = require "snax.webserver"
-local token = require "wind.token"
 
 local request = {}
 
 function request:login()
-	local t = token.encode(self.id)
+	local token = 'TOKEN'..self.id
+	return {token = token}
 end
 
 
