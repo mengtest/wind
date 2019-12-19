@@ -24,9 +24,13 @@ if MODE == "agent" then
     local request = {}
 
     function request:login(fd)
+        local id = assert(self.id)
         local c = client[fd]
+        c.id = id
         c.agent = skynet.newservice("agent")
-        skynet.call(c.agent, "lua", "start", fd, assert(self.id))
+        client[id] = c
+
+        skynet.call(c.agent, "lua", "start", id)
         return {ok = true}
     end
 
@@ -42,17 +46,17 @@ if MODE == "agent" then
         print("ws connect from: " .. tostring(fd))
     end
 
-    function handle.message(id, msg)
-        print(id, msg)
+    function handle.message(fd, msg)
+        print(fd, msg)
         local function close_client(errmsg)
             errmsg = errmsg or "invalid client"
-            client[id] = nil
+            client[fd] = nil
             skynet.error(errmsg)
-            websocket.write(id, errmsg)
-            websocket.close(id)
+            websocket.write(fd, errmsg)
+            websocket.close(fd)
         end
 
-        local c = client[id]
+        local c = client[fd]
         if c.agent then
             local response = skynet.call(c.agent, "lua", "client", msg)
             print("response:", response)
@@ -68,36 +72,47 @@ if MODE == "agent" then
                 return close_client("invalid cmd:"..tostring(cmd))
             end
 
-            local ok, r = pcall(f, args, id)
+            local ok, r = pcall(f, args, fd)
             if not ok then
                 return close_client(r)
             end
 
-            return websocket.write(id, cjson.encode(r))
+            return websocket.write(fd, cjson.encode(r))
         end
     end
 
-    function handle.close(id, code, reason)
-        local c = client[id]
+    function handle.close(fd, code, reason)
+        local c = client[fd]
         if c then
             c.connected = false
         end
-        print("ws close from: " .. tostring(id), code, reason)
+        print("ws close from: " .. tostring(fd), code, reason)
     end
 
-    function handle.error(id)
-        print("ws error from: " .. tostring(id))
+    function handle.error(fd)
+        print("ws error from: " .. tostring(fd))
+    end
+
+    local commond = {}
+
+    function commond.send_request(pid, msg)
+        local c = client[pid]
+        websocket.write(c.fd, msg)
     end
 
     skynet.start(function ()
-        skynet.dispatch("lua", function (_,_, id, protocol, addr)
-            local ok, err = websocket.accept(id, handle, protocol, addr)
-            if not ok then
-                print(err)
+        skynet.dispatch("lua", function (_,_, fd, protocol, addr, ...)
+            if type(fd) == "number" then
+                local ok, err = websocket.accept(fd, handle, protocol, addr)
+                if not ok then
+                    print(err)
+                end
+            else
+                local f = assert(commond[id])
+                skynet.ret(skynet.pack(f(protocol, addr, ...)))
             end
         end)
     end)
-
 else
     skynet.start(function ()
         local agent = {}
@@ -108,9 +123,9 @@ else
         local protocol = "ws"
         local id = socket.listen("0.0.0.0", 9013)
         skynet.error(string.format("Listen websocket port 9013 protocol:%s", protocol))
-        socket.start(id, function(id, addr)
-            print(string.format("accept client socket_id: %s addr:%s", id, addr))
-            skynet.send(agent[balance], "lua", id, protocol, addr)
+        socket.start(id, function(fd, addr)
+            print(string.format("accept client socket_fd: %s addr:%s", fd, addr))
+            skynet.send(agent[balance], "lua", fd, protocol, addr)
             balance = balance + 1
             if balance > #agent then
                 balance = 1

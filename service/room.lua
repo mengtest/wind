@@ -71,7 +71,7 @@ function commond.join(u)
 end
 
 function commond.init(conf, players)
-    room_init(self, players)
+    room_init(conf, players)
 end
 
 skynet.start(function()
