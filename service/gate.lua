@@ -16,10 +16,11 @@ end
 
 
 local handle = {}
-local MODE = ...
+local MODE, master = ...
 
 if MODE == "agent" then
-    
+    master = tonumber(master)
+
     local client = {}
     local request = {}
 
@@ -43,6 +44,7 @@ if MODE == "agent" then
             connected = true,
             logined = false
         }
+        skynet.send(master, "lua", "an_client_connect")
         print("ws connect from: " .. tostring(fd))
     end
 
@@ -58,7 +60,11 @@ if MODE == "agent" then
 
         local c = client[fd]
         if c.agent then
+            local session = string.unpack(">I4", msg, -4)
+            msg = msg:sub(1,-5)
             local response = skynet.call(c.agent, "lua", "client", msg)
+            c.msg_index = c.msg_index + 1
+            response = response .. string.pack(">I4I4", session, c.msg_index)
             print("response:", response)
             websocket.write(id, response)
         else
@@ -86,6 +92,7 @@ if MODE == "agent" then
         if c then
             c.connected = false
         end
+        skynet.send(master, "lua", "an_client_disconnect")
         print("ws close from: " .. tostring(fd), code, reason)
     end
 
@@ -108,27 +115,49 @@ if MODE == "agent" then
                     print(err)
                 end
             else
-                local f = assert(commond[id])
+                local f = assert(commond[fd])
                 skynet.ret(skynet.pack(f(protocol, addr, ...)))
             end
         end)
     end)
 else
+    local maxclient = 8888
+    local connectedc = 0
+
+    local commond = {}
+
+    function commond.an_client_connect()
+        connectedc = connectedc + 1
+    end
+
+    function commond.an_client_disconnect()
+        connectedc = connectedc - 1
+    end
+
+    skynet.dispatch("lua", function (_,_, cmd, ...)
+        local f = commond[cmd]
+        f(...)
+    end)
     skynet.start(function ()
         local agent = {}
         for i= 1, skynet.getenv "thread" do
-            agent[i] = skynet.newservice(SERVICE_NAME, "agent")
+            agent[i] = skynet.newservice(SERVICE_NAME, "agent", skynet.self())
         end
         local balance = 1
         local protocol = "ws"
         local id = socket.listen("0.0.0.0", 9013)
         skynet.error(string.format("Listen websocket port 9013 protocol:%s", protocol))
         socket.start(id, function(fd, addr)
-            print(string.format("accept client socket_fd: %s addr:%s", fd, addr))
-            skynet.send(agent[balance], "lua", fd, protocol, addr)
-            balance = balance + 1
-            if balance > #agent then
-                balance = 1
+            if connectedc < maxclient then
+                print(string.format("accept client socket_fd: %s addr:%s", fd, addr))
+                skynet.send(agent[balance], "lua", fd, protocol, addr)
+                balance = balance + 1
+                if balance > #agent then
+                    balance = 1
+                end
+            else
+                socket.close(fd)
+                skynet.error("num of client is max:", maxclient)
             end
         end)
     end)
