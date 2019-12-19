@@ -36,21 +36,22 @@ SYSTEM_ERROR = {
 }
 
 AUTH_ERROR = {
-	account_nil        = add{code = 0x0101, desc = "帐号为空"},
-	password_nil       = add{code = 0x0102, desc = "密码为空"},
-	telephone_nil      = add{code = 0x0103, desc = "电话号码为空"},
-	account_exist      = add{code = 0x0104, desc = "帐号存在"},
-	player_id_limit    = add{code = 0x0105, desc = "玩家id已达上限"},
-	repeat_login       = add{code = 0x0106, desc = "重复登录"},
-	account_not_exist  = add{code = 0x0107, desc = "不存在此帐号"},
-	password_wrong     = add{code = 0x0108, desc = "密码错误"},
-	player_not_exist   = add{code = 0x0109, desc = "对应的玩家不存在"},
-	union_id_nil       = add{code = 0x010a, desc = "union_id为空"},
-	head_url_nil       = add{code = 0x010b, desc = "头像地址为空"},
-	nickname_nil       = add{code = 0x010c, desc = "昵称为空"},
-    sex_nil            = add{code = 0x010d, desc = "性别为空"},
-    invalid_token      = add{code = 0x010e, desc = "非法token"},
-    token_expires      = add{code = 0x010f, desc = "token过期"},
+	account_nil        			= add{code = 0x0101, desc = "帐号为空"},
+	password_nil       			= add{code = 0x0102, desc = "密码为空"},
+	telephone_nil      			= add{code = 0x0103, desc = "电话号码为空"},
+	account_exist      			= add{code = 0x0104, desc = "帐号存在"},
+	player_id_limit    			= add{code = 0x0105, desc = "玩家id已达上限"},
+	repeat_login       			= add{code = 0x0106, desc = "重复登录"},
+	account_not_exist  			= add{code = 0x0107, desc = "不存在此帐号"},
+	password_wrong     			= add{code = 0x0108, desc = "密码错误"},
+	player_not_exist   			= add{code = 0x0109, desc = "对应的玩家不存在"},
+	union_id_nil       			= add{code = 0x010a, desc = "union_id为空"},
+	head_url_nil       			= add{code = 0x010b, desc = "头像地址为空"},
+	nickname_nil       			= add{code = 0x010c, desc = "昵称为空"},
+    sex_nil            			= add{code = 0x010d, desc = "性别为空"},
+    invalid_token      			= add{code = 0x010e, desc = "非法token"},
+    token_expires      			= add{code = 0x010f, desc = "token过期"},
+    token_refresh_overlimit 	= add{code = 0x0110, desc = "token过期"},
 }
 
 GAME_ERROR = {

@@ -162,7 +162,11 @@ function M.proxy(source, key, parent, handler)
 		local path = proxy_path(proxy, k)
 
 		local handler = proxy_handler[proxy]
-		handler("assign", path, v)
+		if v ~= nil then
+			handler("assign", path, v)
+		else
+			handler("unset", path)
+		end
 	end
 
 	proxy_key[proxy] = key
