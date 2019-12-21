@@ -28,9 +28,9 @@ function commond.client(source, msg)
 	return cjson.encode(f(args))
 end
 
-function commond.start(source, pid)
+function commond.start(source, uid)
 	gate = source
-	skynet.error("start =============================", gate, pid)
+	skynet.error("start =============================", gate, uid)
 end
 
 skynet.start(function()
