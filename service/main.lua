@@ -16,9 +16,9 @@ skynet.start(function()
 
 
 	skynet.newservice("debug_console", 9999)
-	-- skynet.newservice("admin")
+	skynet.newservice("login")
 	skynet.newservice("gate")
-	-- skynet.newservice("wsclient")
+	skynet.newservice("wsclient")
 
 	
 	skynet.exit()

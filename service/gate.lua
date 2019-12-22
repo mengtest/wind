@@ -5,6 +5,8 @@ local websocket = require "http.websocket"
 local token = require "wind.token"
 local cjson = require "cjson"
 
+print = skynet.error
+
 
 local function unpack_message(msg)
     local data = cjson.decode(msg)
@@ -25,26 +27,8 @@ if MODE == "agent" then
 
     local client = {}
 
-    local function handshake(fd, args)
-        local err, uid = token.auth(args.token)
-        if err then
-            return {err = err}
-        else
-            local c = client[fd]
-            c.agent = c.agent or skynet.newservice("agent")
-            skynet.call(c.agent, "lua", "start", skynet.self(), uid)
-            local packs = c.cache
-            c.cache = {}
-            c.fd = fd
-            return {cache_packs = packs}
-        end
-    end
 
     function handle.connect(fd)
-        client[fd] = {
-            fd = fd,
-            cache = {}
-        }
         skynet.send(master, "lua", "an_client_connect")
         print("ws connect from: " .. tostring(fd))
     end
@@ -54,49 +38,55 @@ if MODE == "agent" then
         if fd and websocket.write(fd, msg) then
             return true
         else
-            table.insert(c.cache, msg)
-            return false, #c.cache
+            table.insert(c.packs, msg)
+            return false, #c.packs
+        end
+    end
+
+    function handle.handshake(fd, header, url)
+        local err, uid = token.auth(header.token)
+        if err then
+            websocket.close(fd)
+            skynet.error("handshake failed", fd)
+        else
+            local c = client[uid]
+            if c then
+                local packs = #c.packs > 0 and c.packs
+                if websocket.write(fd, cjson.encode({packs = packs})) then
+                    c.fd = fd
+                    c.packs = {}
+                    client[fd] = c
+                end
+            else
+                if websocket.write(fd, cjson.encode{}) then
+                    local agent = skynet.newservice("agent")
+                    skynet.call(agent, "lua", "start", skynet.self(), uid)
+                    c = {
+                        id = uid,
+                        fd = fd,
+                        agent = agent,
+                        packs = {}
+                    }
+                    client[fd] = c
+                    client[uid] = c
+                end
+            end
         end
     end
 
     function handle.message(fd, msg)
-        print(fd, msg)
-        local function close_client(errmsg)
-            errmsg = errmsg or "invalid client"
-            client[fd] = nil
-            skynet.error(errmsg)
-            websocket.write(fd, errmsg)
-            websocket.close(fd)
-        end
-
         local c = client[fd]
-        if c.agent then
-            local session = string.unpack(">I4I4", msg, -8)
+        if c and c.agent then
+            local session = string.unpack(">I4", msg, -4)
             msg = msg:sub(1,-5)
             local response = skynet.call(c.agent, "lua", "client", msg)
             c.msg_index = c.msg_index + 1
             response = response .. string.pack(">I4I4", session, c.msg_index)
             print("response:", response)
-            websocket.write(fd, response)
+            send2client(c, response)
         else
-            -- must be handshake
-            local ok, cmd, args = pcall(unpack_message, msg)
-            if not ok then
-                return close_client(cmd)
-            end
-
-            if cmd ~= "handshake" then
-                return close_client("need handshake:"..tostring(cmd))
-            end
-
-            local ok, r = pcall(handshake, fd, args)
-            if not ok then
-                return close_client(r)
-            end
-
-            if not websocket.write(fd, cjson.encode(r)) then
-                -- handshake not done, kill out
-            end
+            skynet.error("invlaid client:", fd, msg)
+            websocket.close(fd)
         end
     end
 
