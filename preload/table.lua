@@ -14,7 +14,7 @@ function table.filter(t, filter)
 		assert(filter_type == "function")
 		local new = {}
 		for k,v in pairs(t) do
-			if filter(k, v) then
+			if filter(k, v) ~= false then
 				new[k] = v
 			end
 		end
