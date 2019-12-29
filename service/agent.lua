@@ -8,7 +8,7 @@ local gate, me
 
 local function send_request(cmd, args)
 	local msg = cjson.encode({cmd, args})
-	skynet.send(gate, "lua", "send_request", msg)
+	skynet.send(gate, "lua", "send_request", me.id, msg)
 end
 
 local request = {}
@@ -43,6 +43,12 @@ function commond.start(source, uid)
 	gate = source
 	me = db.user.miss_find_one({id = uid})
 	dump(me)
+	skynet.fork(function()
+		while true do 
+			skynet.sleep(500)
+			send_request("heartbeat", {msg = "hello client"})
+		end
+	end)
 end
 
 skynet.start(function()
