@@ -52,24 +52,22 @@ if MODE == "agent" then
             local c = client[uid]
             if c then
                 local packs = #c.packs > 0 and c.packs
-                if websocket.write(fd, cjson.encode({packs = packs})) then
-                    c.fd = fd
-                    c.packs = {}
-                    client[fd] = c
-                end
+                c.fd = fd
+                c.packs = {}
+                client[fd] = c
+                websocket.write(fd, cjson.encode({packs = packs}))
             else
-                if websocket.write(fd, cjson.encode{}) then
-                    local agent = skynet.newservice("agent")
-                    skynet.call(agent, "lua", "start", skynet.self(), uid)
-                    c = {
-                        id = uid,
-                        fd = fd,
-                        agent = agent,
-                        packs = {}
-                    }
-                    client[fd] = c
-                    client[uid] = c
-                end
+                local agent = skynet.newservice("agent")
+                skynet.call(agent, "lua", "start", skynet.self(), uid)
+                c = {
+                    id = uid,
+                    fd = fd,
+                    agent = agent,
+                    packs = {}
+                }
+                client[fd] = c
+                client[uid] = c
+                websocket.write(fd, "{}")
             end
         end
     end
@@ -77,12 +75,7 @@ if MODE == "agent" then
     function handle.message(fd, msg)
         local c = client[fd]
         if c and c.agent then
-            local session = string.unpack(">I4", msg, -4)
-            msg = msg:sub(1,-5)
             local response = skynet.call(c.agent, "lua", "client", msg)
-            c.msg_index = c.msg_index + 1
-            response = response .. string.pack(">I4I4", session, c.msg_index)
-            print("response:", response)
             send2client(c, response)
         else
             skynet.error("invlaid client:", fd, msg)
@@ -94,6 +87,10 @@ if MODE == "agent" then
         local c = client[fd]
         if c then
             c.fd = nil
+            client[fd] = nil
+            if c.agent then
+                pcall(skynet.send, c.agent, "lua", "socket_close")                
+            end
         end
         skynet.send(master, "lua", "an_client_disconnect")
         print("ws close from: " .. tostring(fd), code, reason)
@@ -103,12 +100,33 @@ if MODE == "agent" then
         print("ws error from: " .. tostring(fd))
     end
 
+    local function close_client(pid)
+        local c = client[pid]
+        if c then
+            client[pid] = nil
+            local fd = c.fd
+            if fd then
+                client[fd] = nil
+                websocket.close(fd)
+            end
+        end
+    end
+
     local commond = {}
+
+    -- call by agent start
+    function commond.close_client(pid)
+        close_client(pid)
+    end
 
     function commond.send_request(pid, msg)
         local c = client[pid]
-        websocket.write(c.fd, msg)
+        local ok, n = send2client(c, msg)
+        if not ok and n >= 128 then
+            close_client(pid)
+        end
     end
+    -- call by agent end
 
     skynet.start(function ()
         skynet.dispatch("lua", function (_,_, fd, protocol, addr, ...)

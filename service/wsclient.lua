@@ -5,14 +5,16 @@ local cjson = require "cjson"
 local ws_id
 local me
 
-print = skynet.error
+print = function(...)
+    local time = skynet.hpc()
+    skynet.error(time/1000000000, ...)
+end
 
+local session = 0
 local function send_request(cmd, args)
     print("client send:", cmd)
-    websocket.write(ws_id, cjson.encode{cmd, args})
-    skynet.sleep(10)
-    local resp, close_reason = websocket.read(ws_id)
-    print("server: " .. (resp and resp or "[Close] " .. close_reason))
+    session = session + 1
+    websocket.write(ws_id, cjson.encode{session, cmd, args})
 end
 
 local function login(tel)
@@ -47,7 +49,7 @@ end
 local function start_read_message()
     skynet.fork(function ()
         while true do
-            skynet.sleep(100)
+            skynet.sleep(1)
             local resp, close_reason = websocket.read(ws_id)
             print("server: " .. (resp and resp or "[Close] " .. close_reason))
         end
@@ -66,10 +68,12 @@ local function connect()
     end
 
     start_read_message()
-    send_request("start_match")
+    send_request("self_info")
+    send_request("self_info")
+    send_request("self_info")
 end
 
 
 skynet.start(function()
-    skynet.fork(connect)
+    connect()
 end)

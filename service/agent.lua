@@ -1,8 +1,10 @@
 local skynet = require "skynet"
-local websocket = require "http.websocket"
+require "skynet.queue"
 local cjson = require "cjson"
+local db = require "wind.mongo"
 
-local gate
+local lock = skynet.queue()
+local gate, me
 
 local function send_request(cmd, args)
 	local msg = cjson.encode({cmd, args})
@@ -10,6 +12,12 @@ local function send_request(cmd, args)
 end
 
 local request = {}
+
+function request:self_info()
+	return table.filter(me, function(k,v)
+		return k ~= "_id"
+	end)
+end
 
 
 function request:start_match()
@@ -21,22 +29,26 @@ end
 -----------------------------------------------------
 local commond = {}
 
-function commond.client(source, msg)
-	local data = cjson.decode(msg)
-	local cmd, args = data[1], data[2] or {}
-	local f = request[cmd]
-	return cjson.encode(f(args))
+function commond.client(msg)
+	return lock(function()
+		local data = cjson.decode(msg)
+		local session, cmd, args = data[1], data[2], data[3] or {}
+		local f = request[cmd]
+		local r = f(args)
+		return cjson.encode({session, r})	
+	end)
 end
 
 function commond.start(source, uid)
 	gate = source
-	skynet.error("start =============================", gate, uid)
+	me = db.user.miss_find_one({id = uid})
+	dump(me)
 end
 
 skynet.start(function()
-    skynet.dispatch("lua", function(_,source, cmd, ...)
-		print("lua:", cmd, ...)
+    skynet.dispatch("lua", function(_,_, cmd, ...)
+		skynet.error("cmd:", cmd, ...)
 		local f = assert(commond[cmd], cmd)
-		skynet.ret(skynet.pack(f(source, ...)))
+		skynet.ret(skynet.pack(f(...)))
     end)
 end)

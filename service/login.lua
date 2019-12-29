@@ -27,8 +27,7 @@ function request:login()
 		}
 		db.user.insert(u)
 	end
-	u.token = token.encode(u.id)	
-	return u
+	return {token = token.encode(u.id)}
 end
 
 ------------------------------------------------------------------------
