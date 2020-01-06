@@ -37,11 +37,11 @@ local function query_db(db_name)
 		db = {}
 
 		function db.set(k, v)
-			return skynet.call(service_addr, "lua", k, v)
+			return skynet.call(service_addr, "lua", 'SET', k, v)
 		end
 
 		function db.get(k)
-			return skynet.call(service_addr, "lua", k)
+			return skynet.call(service_addr, "lua", 'GET', k)
 		end
 
 		cache[db_name] = db

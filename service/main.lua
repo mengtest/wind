@@ -14,7 +14,15 @@ skynet.start(function()
 		local console = skynet.newservice("console")
 	end
 	skynet.newservice("debug_console", 9999)
-
+	skynet.newservice("login")
+	local gate = skynet.newservice("ws-gate-master")
+	skynet.call(gate, "lua", "start", {
+		port = 8888,
+		maxclient = 8888,
+		nodelay = true,
+	})
 	
+	skynet.newservice("ws-client")
+
 	skynet.exit()
 end)

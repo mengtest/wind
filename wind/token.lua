@@ -34,7 +34,7 @@ function token.auth(t)
             if server_name == server.name then
                 local expire_time = create_time + TOKEN_VALID_TIME
                 if expire_time > os.time() then
-                    return id, expire_time
+                    return nil, id, expire_time
                 else
                     return nil, AUTH_ERROR.token_expires
                 end
