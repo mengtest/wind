@@ -83,7 +83,7 @@ end
 
 skynet.start(function()
     skynet.dispatch("lua", function(session, _, cmd, ...)
-        local f = commond[cmd]
+        local f = assert(commond[cmd], cmd)
         if session == 0 then
             f(...)
         else

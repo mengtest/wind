@@ -51,12 +51,6 @@ function commond.start(source, id, fd, protocol, addr)
 	gate = source
 	me = db.user.miss_find_one({id = id})
 	dump(me)
-	skynet.fork(function()
-		while true do 
-			skynet.sleep(500)
-			send_request("heartbeat", {msg = "hello client"})
-		end
-	end)
 end
 
 skynet.start(function()
