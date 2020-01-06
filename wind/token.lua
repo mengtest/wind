@@ -36,12 +36,12 @@ function token.auth(t)
                 if expire_time > os.time() then
                     return nil, id, expire_time
                 else
-                    return nil, AUTH_ERROR.token_expires
+                    return AUTH_ERROR.token_expires
                 end
             end
         end
     end
-    return nil, AUTH_ERROR.invalid_token
+    return AUTH_ERROR.invalid_token
 end
 
 

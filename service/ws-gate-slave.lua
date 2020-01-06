@@ -1,7 +1,8 @@
 local skynet = require "skynet"
 local websocket = require "http.websocket"
 local socketdriver = require "skynet.socketdriver"
-local kbdb = require "wind.kvdb"
+local kvdb = require "wind.kvdb"
+
 local token = require "wind.token"
 
 local protocol, nodelay = ...
@@ -28,7 +29,7 @@ function handle.handshake(fd, header, url)
     end
     local agent = kvdb.user_agent.get(id)
     if not agent or not pcall(skynet.send, agent, "lua", "reconnect", fd, protocol, addr) then
-        local agent = skynet.newservice("agent")
+        agent = skynet.newservice("ws-agent")
         kvdb.user_agent.set(id, agent)
         skynet.send(agent, "lua", "start", id, fd, protocol, addr)
     end
@@ -37,7 +38,7 @@ end
 
 function handle.message(fd, msg)
     if connection[fd] then
-        local a = client[fd]
+        local a = assert(client[fd])
         skynet.send(a, "lua", "client", msg)
     else
         skynet.error(string.format("Drop message from fd (%d) : %s", fd, msg))

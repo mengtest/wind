@@ -19,7 +19,7 @@ function commond.start(conf)
     assert(protocol == "ws" or protocol == "wss")
 
     for i= 1, skynet.getenv "thread" do
-        slave[i] = skynet.newservice("gate-slave", protocol, nodelay)
+        slave[i] = skynet.newservice("ws-gate-slave", protocol, nodelay)
     end
 
     local id = socket.listen(host, port)
