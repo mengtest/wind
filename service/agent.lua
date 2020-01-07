@@ -9,14 +9,17 @@ local send_request
 
 local CMD = {}
 local REQUEST = {}
-local client_fd
+local client_fd, me
 
 function REQUEST:handshake()
 	return { msg = "Welcome to skynet, I will send heartbeat every 5 sec." }
 end
 
+-- client call agent quit
+-- agent call watchdog logout
+-- watchdog send agent exit 
 function REQUEST:quit()
-	skynet.call(WATCHDOG, "lua", "close", client_fd)
+	skynet.call(WATCHDOG, "lua", "logout", me.id)
 end
 
 local function send_package(pack)
@@ -31,10 +34,18 @@ skynet.register_protocol {
 	dispatch = function (fd, _, msg)
 		assert(fd == client_fd)	-- You can use fd to reply message
 		skynet.ignoreret()	-- session is fd, don't call skynet.ret
-		skynet.trace()
 		print("msg:", msg)
 	end
 }
+
+function CMD.disconnect(fd)
+	print("client disconnect", fd)
+end
+
+function CMD.reconnect(fd, addr)
+	client_fd = fd
+	skynet.call(gate, "lua", "forward", fd)
+end
 
 function CMD.start(conf)
 	local fd = conf.client
@@ -44,7 +55,8 @@ function CMD.start(conf)
 	skynet.call(gate, "lua", "forward", fd)
 end
 
-function CMD.disconnect()
+-- call by watchdog
+function CMD.exit()
 	-- todo: do something before exit
 	skynet.exit()
 end
