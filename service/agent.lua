@@ -3,13 +3,10 @@ local socket = require "skynet.socket"
 local sproto = require "sproto"
 local sprotoloader = require "sprotoloader"
 
-local WATCHDOG
-local host
-local send_request
-
+local WATCHDOG, GATE, client_fd
 local CMD = {}
 local REQUEST = {}
-local client_fd, me
+local me
 
 function REQUEST:handshake()
 	return { msg = "Welcome to skynet, I will send heartbeat every 5 sec." }
@@ -39,20 +36,22 @@ skynet.register_protocol {
 }
 
 function CMD.disconnect(fd)
-	print("client disconnect", fd)
+	skynet.error("client disconnect", fd)
 end
 
 function CMD.reconnect(fd, addr)
+	skynet.error("reconnect", fd, addr)
 	client_fd = fd
-	skynet.call(gate, "lua", "forward", fd)
+	skynet.call(GATE, "lua", "forward", fd)
 end
 
 function CMD.start(conf)
+	dump(conf)
 	local fd = conf.client
-	local gate = conf.gate
+	GATE = conf.gate
 	WATCHDOG = conf.watchdog
 	client_fd = fd
-	skynet.call(gate, "lua", "forward", fd)
+	skynet.call(GATE, "lua", "forward", fd)
 end
 
 -- call by watchdog

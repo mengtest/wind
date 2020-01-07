@@ -1,7 +1,7 @@
 local M = {}
 
 
-M.name = "wind_server"
+M.name = "wind"
 
 
 

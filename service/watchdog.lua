@@ -31,6 +31,7 @@ end
 local function logout(id)
 	local u = user[id]
 	if u then
+		user[u.fd] = nil
 		user[id] = nil
 		skynet.call(gate, "lua", "kick", u.fd)
 		skynet.send(u.agent, "lua", "exit")
@@ -45,7 +46,7 @@ end
 
 
 function SOCKET.close(fd)
-	print("socket close",fd)
+	skynet.error("socket close",fd)
 	handshake[fd] = nil
 
 	local u = user[fd]
@@ -66,18 +67,14 @@ function SOCKET.warning(fd, size)
 end
 
 function SOCKET.data(fd, msg)
-	print("watchdog socket data:", fd, msg)
-	handshake[fd] = nil
-
-	local handshake = msg:sub(1, 9)
-	if handshake == "handshake" then
-		local err, id = token.auth(msg:sub(10))
-		if not err then
-			local addr = handshake[fd]
-			login(id, fd, addr)
-			socketdriver.send(fd, "200 OK\n")
-			return
-		end
+	skynet.error("socket data:", fd, msg)
+	local err, id = token.auth(msg)
+	if not err then
+		local addr = handshake[fd]
+		handshake[fd] = nil
+		login(id, fd, addr)
+		socketdriver.send(fd, "200 OK\n")
+		return
 	end
 	socketdriver.send(fd, "401 BadToken\n")
 	skynet.call(gate, "lua", "kick", fd)
