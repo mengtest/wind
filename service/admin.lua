@@ -1,16 +1,10 @@
 local skynet = require "skynet"
-local cjson = require "cjson"
-local web = require "snax.webserver"
+local web = require "wind.web"
 local db = require "wind.mongo"
 local token = require "wind.token"
 
-------------------------------------------------------------------------
--- request
-------------------------------------------------------------------------
 
-local request = {}
-
-function request:login()
+web.post("/login", web.jsonhandle(function(self)
 	local account = assert(self.account)
 	local password = assert(self.password)
 	
@@ -24,31 +18,14 @@ function request:login()
 	local t = token.encode(account)
 	
 	return {token = t}
-end
+end))
 
-function request:test()
-	local account, err = token.auth(self.token) 
-	return {
-		msg = "hello i'm wind-admin",
-		account = account,
-		err = err
-	}
-end
 
-------------------------------------------------------------------------
--- commond
-------------------------------------------------------------------------
-local commond = {}
+web.post("/test", function(req, res)
+	res.send("im admin server")
+end)
 
-function commond.hello()
-	return "world"
-end
 
-web {
-    name = "admin-master",
-    host = "0.0.0.0",
-    port = 9011,
-    protocol = "http",
-    request = request,
-    commond = commond
-}
+skynet.start(function()
+	web.listen(9011)
+end)
