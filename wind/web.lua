@@ -112,6 +112,8 @@ local function accept(id, addr)
                     end
                 }
                 h(req, res)
+            else
+                skynet.error(string.format('No handle of method: "%s", path: "%s", client: "%s"', method, path, addr))
             end
         end
     else
