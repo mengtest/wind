@@ -134,7 +134,7 @@ function M.listen(host, port)
         port = host
         host = "0.0.0.0"
     end
-	skynet.error(string.format("Listen http at %s: %d", host, port))
+	skynet.error(string.format('Listen at "%s://%s:%d"', M.protocol, host, port))
 	local id = socket.listen(host, tonumber(port))
 
     socket.start(id, function(id, addr)
