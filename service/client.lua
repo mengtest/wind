@@ -7,7 +7,7 @@ local TOKEN, fd
 print = skynet.error
 
 local function login(tel)
-    local status, body = httpc.request("POST", "http://127.0.0.1:9015", "/", nil, nil, cjson.encode{"login", {tel = tel}})
+    local status, body = httpc.request("POST", "http://127.0.0.1:9015", "/login", nil, nil, cjson.encode{tel = tel})
     if status ~= 200 then
         return print(status)
     end
@@ -28,9 +28,21 @@ local function connect()
     end
 end
 
+local function start_read()
+    skynet.fork(function()
+        while true do  
+            skynet.sleep(10)
+            local sz = socket.read(fd, 2)
+            sz = string.byte(sz:sub(1, 1))*256 + string.byte(sz:sub(2, 2))
+            print("server:", socket.read(fd, sz))
+        end
+    end)
+end
 
+local session = 0
 local function send_request(name, args)
-    local pack = string.pack(">s2", cjson.encode{name, args})
+    session = session + 1
+    local pack = string.pack(">s2", cjson.encode{session, name, args})
     socket.write(fd, pack)
 end
 
@@ -46,8 +58,12 @@ local function main()
     end
 
     connect()
-    socket.close(fd)
-    connect()
+    start_read()
+    send_request("handshake", {msgindex = 0})
+
+
+    -- socket.close(fd)
+    -- connect()
     -- send_request("hello", {msg = "world"})
 
 

@@ -16,7 +16,6 @@ skynet.start(function()
 	skynet.newservice("debug_console", 9999)
 	skynet.newservice("admin")
 
-	--[[
 	skynet.newservice("login")
 	local watchdog = skynet.newservice("watchdog")
 	skynet.call(watchdog, "lua", "start", {
@@ -26,7 +25,6 @@ skynet.start(function()
 	})
 	
 	skynet.newservice("client")
-	]]
 
 	skynet.exit()
 end)
