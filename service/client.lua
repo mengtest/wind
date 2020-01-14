@@ -33,6 +33,10 @@ local function start_read()
         while true do  
             skynet.sleep(10)
             local sz = socket.read(fd, 2)
+            if sz == false then
+                print("socket closed")
+                return
+            end
             sz = string.byte(sz:sub(1, 1))*256 + string.byte(sz:sub(2, 2))
             print("server:", socket.read(fd, sz))
         end
@@ -66,7 +70,9 @@ local function main()
     -- connect()
     -- send_request("hello", {msg = "world"})
 
-
+    skynet.timeout(500, function()
+        send_request("quit")
+    end)
 
     
 end

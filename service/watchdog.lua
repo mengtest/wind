@@ -14,10 +14,10 @@ local function login(id, fd, addr)
 		skynet.call(gate, "lua", "kick", u.fd)
 		user[u.fd] = nil
 		u.fd = fd
-		skynet.call(u.agent, "lua", "reconnect", fd, addr)
+		skynet.call(u.agent, "lua", "wd_reconnect", fd, addr)
 	else
 		local a = skynet.newservice("agent")
-		skynet.call(a, "lua", "start", { gate = gate, id = id, client = fd, addr = addr, watchdog = skynet.self() })
+		skynet.call(a, "lua", "wd_start", { gate = gate, id = id, client = fd, addr = addr, watchdog = skynet.self() })
 		u = {
 			id = id,
 			fd = fd,
@@ -34,13 +34,13 @@ local function logout(id)
 		user[u.fd] = nil
 		user[id] = nil
 		skynet.call(gate, "lua", "kick", u.fd)
-		skynet.send(u.agent, "lua", "exit")
+		skynet.send(u.agent, "lua", "wd_exit")
 	end
 end
 
 function SOCKET.open(fd, addr)
 	skynet.error("New client from : " .. addr)
-	handshake[fd] = addr
+	handshake[fd] = addr:match("(.+):(%d+)")
 	skynet.send(gate, "lua", "accept", fd)
 end
 
@@ -52,7 +52,7 @@ function SOCKET.close(fd)
 	local u = user[fd]
 	if u then
 		user[fd] = nil
-		skynet.send(u.agent, "lua", "disconnect", fd)
+		skynet.send(u.agent, "lua", "wd_disconnect", fd)
 	end
 end
 
