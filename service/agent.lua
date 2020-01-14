@@ -3,7 +3,9 @@ local agent = require "snax.agentserver"
 local db = require "wind.mongo"
 
 local me
-
+------------------------------------------------------------
+-- REQUEST
+------------------------------------------------------------
 local request = {}
 
 function request:quit()
@@ -15,15 +17,19 @@ function request:hello()
 end
 
 
+------------------------------------------------------------
+-- CMD
+------------------------------------------------------------
 local commond = {}
 
+function commond.send2client(name, args)
+    agent.send_request(name, args)
+end
 
-
-
+------------------------------------------------------------
+-- HANDLE
+------------------------------------------------------------
 local handle = {}
-
-
-
 
 function handle.exit()
     skynet.error('------------exit-------------------')
