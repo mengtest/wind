@@ -66,6 +66,10 @@ function mongo.update(...)
     return skynet.call(service_addr, "lua", "update", ...)
 end
 
+function mongo.count(...)
+    return skynet.call(service_addr, "lua", "count", ...)
+end
+
 function mongo.sum(...)
     return skynet.call(service_addr, "lua", "sum", ...)
 end
@@ -165,6 +169,12 @@ skynet.start(function()
             return db[coll_name]:update(query, update, upsert, multi)
         end
 
+        -- Ex
+        function command.count(coll_name, query)
+            local it = db[coll_name]:find(query)
+            return it:count()
+        end
+
         function command.sum(coll_name, query, key)
             local pipeline = {}
             if query then
@@ -183,6 +193,8 @@ skynet.start(function()
             end
             return 0
         end
+
+
 
         skynet.start(function()
             skynet.dispatch("lua", function (_, _, cmd, ...)

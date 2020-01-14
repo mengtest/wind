@@ -36,7 +36,7 @@ function M.jsonhandle(f)
 	return function(req, res)
 		local ok, data = pcall(cjson.decode, req.body)
 		if ok then
-			local result = f(data)
+			local result = f(data, req)
 			res.send(cjson.encode(result))
 		end
 	end

@@ -6,7 +6,7 @@ local uniqueid = require "wind.uniqueid"
 
 
 
-web.post("/login", web.jsonhandle(function(self)
+web.post("/login", web.jsonhandle(function(self, req)
 	local tel = assert(self.tel)
 	local u = db.user.find_one({tel = tel}, {_id = false})
 	if not u then
@@ -18,7 +18,9 @@ web.post("/login", web.jsonhandle(function(self)
 			id = uid,
 			nickname = "玩家"..uid,
 			gold = 0,
-			diamond = 0
+			diamond = 0,
+			reg_time = os.time(),
+			reg_ip = req.addr:match("(.+):(%d+)")
 		}
 		db.user.insert(u)
 	end
