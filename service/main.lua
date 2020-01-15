@@ -17,14 +17,14 @@ skynet.start(function()
 	skynet.newservice("admin")
 
 	skynet.newservice("login")
-	local watchdog = skynet.newservice("watchdog")
-	skynet.call(watchdog, "lua", "start", {
+	local gate = skynet.newservice("ws-gate-master")
+	skynet.call(gate, "lua", "start", {
 		port = 8888,
-		maxclient = max_client,
+		maxclient = 8888,
 		nodelay = true,
 	})
 	
-	skynet.newservice("client")
+	skynet.newservice("ws-client")
 
 	skynet.exit()
 end)

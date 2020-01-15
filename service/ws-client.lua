@@ -9,7 +9,7 @@ local me
 
 local function connect()
 
-    local status, body = httpc.request("POST", "http://127.0.0.1:9015", "/", nil, nil, cjson.encode{"login", {tel = "13972143923"}})
+    local status, body = httpc.request("POST", "http://127.0.0.1:9015", "/login", nil, nil, cjson.encode{tel = "13972143923"})
     if status ~= 200 then
         return print(status)
     end
