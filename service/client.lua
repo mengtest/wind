@@ -64,15 +64,17 @@ local function main()
     connect()
     start_read()
     send_request("handshake", {msgindex = 0})
+    send_request("base_info")
+    send_request("sign")
 
 
     -- socket.close(fd)
     -- connect()
     -- send_request("hello", {msg = "world"})
 
-    skynet.timeout(500, function()
-        send_request("quit")
-    end)
+    -- skynet.timeout(500, function()
+    --     send_request("quit")
+    -- end)
 
     
 end

@@ -1,56 +1,59 @@
 local skynet = require "skynet"
 local agent = require "snax.agentserver"
 local db = require "wind.mongo"
+local lobby = require "game.lobby"
+local ec = require "wind.eventcenter-local"
 
-local me
-------------------------------------------------------------
--- REQUEST
-------------------------------------------------------------
+local handle = {}
 local request = {}
+local command = {}
 
-function request:quit()
-    agent.logout()
-end
-
-function request:hello()
-    return {msg = "hello client"}
-end
-
-
-------------------------------------------------------------
--- CMD
-------------------------------------------------------------
-local commond = {}
-
-function commond.send2client(name, args)
+function command.send2client(name, args)
     agent.send_request(name, args)
 end
 
-------------------------------------------------------------
--- HANDLE
-------------------------------------------------------------
-local handle = {}
+function handle.request(cmd, args)
+    local f = assert(request[cmd], cmd)
+    return f(args)
+end
+
+function handle.command(cmd, ...)
+    local f = assert(command[cmd], cmd)
+    return f(...)
+end
 
 function handle.exit()
-    skynet.error('------------exit-------------------')
+    ec.pub{type = "exit", time = os.time()}
+    skynet.error('------------ exit ------------')
 end
 
 function handle.start(id, addr)
     me = db.user.miss_find_one{id = id}
     me.login_time = os.time()
     me.login_ip = addr
-    me.loginc = (me.loginc or 0) + 1
-    dump(me)
+    me.loginc = me.loginc + 1
+
+    -- load loginc module
+    local self = setmeatable({}, {__index = me})
+    
+    function self.add_gold(num, desc)
+        me.gold = me.gold + num
+    end
+
+    function self.add_diamond(num, desc)
+        me.diamond = me.diamond + num
+    end
+
+    function self.add_reward(reward)
+        
+    end
+
+
+    lobby(self, request, command)
 end
 
 function handle.init()
-    skynet.error('------------init-------------------')
-    skynet.timeout(200, function()
-        agent.send_request("heartbeat", {msg = "hi"})
-    end)
+    skynet.error('------------ init ------------')
 end
-
-handle.request = request
-handle.commond = commond
 
 agent.start(handle)

@@ -9,6 +9,7 @@ local my_id
 -----------------------------------------------------------------
 -- NET
 -----------------------------------------------------------------
+local handle, request_handle, command_handle
 local msgindex = 0
 local msgpacks = {}
 
@@ -58,13 +59,6 @@ end
 -----------------------------------------------------------------
 -- CLIENT REQUEST
 -----------------------------------------------------------------
-local REQUEST = {}
-
-function REQUEST:handshake()
-	local ok = handshake(self.msgindex)
-	return {ok = ok}
-end
-
 skynet.register_protocol {
 	name = "client",
 	id = skynet.PTYPE_CLIENT,
@@ -77,14 +71,18 @@ skynet.register_protocol {
 	dispatch = function (fd, _, session, name, args)
 		assert(fd == client_fd)
 		skynet.ignoreret()
-		local f = REQUEST[name]
-		send_respone(session, f(args))
+		if name == "handshake" then
+			local ok = handshake(args.msgindex)
+			send_respone(session, {ok = ok})
+		else
+			send_respone(session, handle.request(name, args))
+		end
 	end
 }
 -----------------------------------------------------------------
 -- CMD and Handle
 -----------------------------------------------------------------
-local handle
+
 local CMD = {}
 
 local function try_handle(cmd, ...)
@@ -139,27 +137,25 @@ end
 
 function agent.start(h)
 	handle = h
-	
-	for k,v in pairs(handle.request) do
-		assert(not REQUEST[k])
-		REQUEST[k] = v
-	end
-
-	if handle.command then
-		for k,v in pairs(handle.command) do 
-			assert(not CMD[k])
-			CMD[k] = v
-		end
-	end
+	request_handle = assert(handle.request)
+	command_handle = assert(handle.command) 
 
     skynet.start(function()
         try_handle("init")
         skynet.dispatch("lua", function(session, _, command, ...)
-            local f = CMD[command]
+        	local f = CMD[command]
             if session == 0 then
-                f(source, ...)
+            	if f then
+                	f(...)
+                else
+                	command_handle(command, ...)
+                end
             else
-                skynet.ret(skynet.pack(f(...)))
+            	if f then
+                	skynet.ret(skynet.pack(f(...)))
+               	else
+               		skynet.ret(skynet.pack(command_handle(command, ...)))
+               	end
             end
         end)
     end)

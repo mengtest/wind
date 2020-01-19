@@ -58,6 +58,19 @@ function mongo.find_one(...)
     return skynet.call(service_addr, "lua", "find_one", ...)
 end
 
+function mongo.find_one_or_insert(coll, query, fields, obj)
+    if not obj then
+        obj = assert(fields)
+        fields = nil
+    end
+    local one = mongo.find_one(coll, query, fields)
+    if not one then
+        one = obj
+        one._id = mongo.insert(coll, obj)
+    end
+    return one
+end
+
 function mongo.find_all(...)
     return skynet.call(service_addr, "lua", "find_all", ...)
 end
@@ -79,6 +92,11 @@ function mongo.miss_find_one(coll, ...)
 	if o then
 		return miss_one(coll, o)
 	end
+end
+
+function mongo.miss_find_one_or_insert(...)
+    local o = mongo.find_one_or_insert(...)
+    return miss_one(coll, o)
 end
 
 function mongo.miss_find_all(coll, ...)

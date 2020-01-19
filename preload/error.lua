@@ -28,7 +28,7 @@ AUTH_ERROR = {
 }
 
 GAME_ERROR = {
-
+	has_sign 			= add{code = 0x0201, desc = "今天已经签到了"},
 }
 
 DESK_ERROR = {

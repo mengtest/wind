@@ -15,7 +15,7 @@ skynet.start(function()
 		local console = skynet.newservice("console")
 	end
 	skynet.newservice("debug_console", 9999)
-	--[[
+
 	skynet.newservice("admin")
 	skynet.newservice("login")
 	local watchdog = skynet.newservice("watchdog")
@@ -26,11 +26,9 @@ skynet.start(function()
 	})
 	
 	skynet.newservice("client")
-	]]
-	skynet.newservice("test")
-
-	skynet.sleep(300)
-	world.pub{type = "shutdown", time = os.time()}
+	-- skynet.newservice("test")
+	-- skynet.sleep(300)
+	-- world.pub{type = "shutdown", time = os.time()}
 
 	skynet.exit()
 end)
