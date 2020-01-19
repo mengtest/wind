@@ -2,6 +2,7 @@ local skynet = require "skynet"
 require "skynet.manager"
 local snax = require "skynet.snax"
 local server = require "config.server"
+local world = require "wind.eventcenter-world"
 
 skynet.start(function()
 
@@ -27,6 +28,9 @@ skynet.start(function()
 	skynet.newservice("client")
 	]]
 	skynet.newservice("test")
+
+	skynet.sleep(300)
+	world.pub{type = "shutdown", time = os.time()}
 
 	skynet.exit()
 end)
