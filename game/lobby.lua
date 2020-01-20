@@ -11,7 +11,7 @@ return function (me, request, command)
 	load_moudle(me, request, command)
 
 	function request:base_info()
-		return table.filter(me, {_id = false})
+		return table.filter(me.self(), {_id = false})
 	end
 
 	function command.send2client(name, args)

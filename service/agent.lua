@@ -34,7 +34,11 @@ function handle.start(id, addr)
     me.loginc = me.loginc + 1
 
     -- load loginc module
-    local self = setmeatable({}, {__index = me})
+    local self = setmetatable({}, {__index = me})
+
+    function self.self()
+        return me
+    end
     
     function self.add_gold(num, desc)
         me.gold = me.gold + num
