@@ -41,15 +41,57 @@ function handle.start(id, addr)
     end
     
     function self.add_gold(num, desc)
+        local start_num = me.gold
         me.gold = me.gold + num
+        db.gold_rec.insert{
+            pid = me.id,
+            time = os.time(),
+            start_num = start,
+            end_num = me.gold,
+            desc = desc
+        }
     end
 
     function self.add_diamond(num, desc)
+        local start_num = me.diamond
         me.diamond = me.diamond + num
+        db.diamond_rec.insert{
+            pid = me.id,
+            time = os.time(),
+            start_num = start,
+            end_num = me.diamond,
+            desc = desc
+        }
     end
 
-    function self.add_reward(reward)
-        
+    local function find_goods_in_backpack(id)
+        for i,v in ipairs(me.backpack) do
+            if v.id == id then
+                return v
+            end
+        end
+    end
+
+    function self.add_rewards(rewards, desc)
+        local now = os.time()
+        for i,v in ipairs(rewards) do
+            if v.id == "gold" then
+                self.add_gold(v.num, desc)
+            elseif v.id == "diamond" then
+                self.add_diamond(v.num, desc)
+            else
+                local goods = find_goods_in_backpack(v.id)
+                local start_num
+                if goods then
+                    start_num = goods.num
+                    GOODS_ADD(goods, v)
+                else
+                    goods = GEN_ZERO_GOODS(v.id)
+                    goods = GOODS_ADD(goods, v)
+                    table.insert(me.backpack, goods)
+                end
+            end
+        end
     end
 
 
