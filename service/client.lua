@@ -67,6 +67,9 @@ local function main()
     send_request("base_info")
     send_request("sign")
 
+    skynet.sleep(100)
+    send_request("base_info")
+
 
     -- socket.close(fd)
     -- connect()

@@ -16,7 +16,7 @@ web.post("/login", web.jsonhandle(function(self, req)
 
 			-- user data
 			id = uid, 								-- ID: 7位随机数字
-			nickname = "玩家"..uid, 					-- 昵称
+			nickname = "玩家"..uid, 				-- 昵称
 			gold = 0, 								-- 金币
 			diamond = 0, 							-- 钻石
 			backpack = {}, 							-- 背包

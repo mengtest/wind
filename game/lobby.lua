@@ -1,6 +1,5 @@
 local db = require "wind.mongo"
 local lobby_active = require "game.lobby_active"
-local ec = require "wind.eventcenter-local"
 
 local function load_moudle(...)
 	lobby_active(...)

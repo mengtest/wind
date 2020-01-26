@@ -34,7 +34,13 @@ function handle.start(id, addr)
     me.loginc = me.loginc + 1
 
     -- load loginc module
-    local self = setmetatable({}, {__index = me})
+    local self = setmetatable({}, {__index = me, __newindex = function(self,k,v)
+        if type(v) ~= "function" then
+            me[k] = v
+        else
+            rawset(self, k, v)
+        end
+    end})
 
     function self.self()
         return me
@@ -46,7 +52,7 @@ function handle.start(id, addr)
         db.gold_rec.insert{
             pid = me.id,
             time = os.time(),
-            start_num = start,
+            start_num = start_num,
             end_num = me.gold,
             desc = desc
         }
@@ -58,7 +64,7 @@ function handle.start(id, addr)
         db.diamond_rec.insert{
             pid = me.id,
             time = os.time(),
-            start_num = start,
+            start_num = start_num,
             end_num = me.diamond,
             desc = desc
         }
@@ -83,17 +89,26 @@ function handle.start(id, addr)
                 local goods = find_goods_in_backpack(v.id)
                 local start_num
                 if goods then
-                    start_num = goods.num
+                    start_num = (v.id == "jipaiqi_tian") and goods.expiry_time or goods.num
                     GOODS_ADD(goods, v)
                 else
+                    start_num = 0
                     goods = GEN_ZERO_GOODS(v.id)
                     goods = GOODS_ADD(goods, v)
                     table.insert(me.backpack, goods)
                 end
+                end_num = (v.id == "jipaiqi_tian") and goods.expiry_time or goods.num
+                db.goods_rec.insert{
+                    pid = me.id,
+                    goods_id = v.id,
+                    time = os.time(),
+                    start_num = start_num,
+                    end_num = me.diamond,
+                    desc = desc
+                }
             end
         end
     end
-
 
     lobby(self, request, command)
 end

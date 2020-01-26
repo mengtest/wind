@@ -1,7 +1,7 @@
 local M = {}
 
 
-M.sign_reward = {gold = 50000}
+M.sign_rewards = {{id = "gold", num = 50000}}
 
 
 

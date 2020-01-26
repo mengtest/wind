@@ -5,7 +5,7 @@ GOODS = {
 }
 
 GEN_ZERO_GOODS = function(id, t)
-	local goods = GOODS[id]
+	local goods = assert(GOODS[id])
 	local new = table.clone(goods)
 	if t then
 		for k,v in pairs(t) do
@@ -17,8 +17,8 @@ end
 
 GOODS_ADD = function (goods1, goods2)
 	assert(goods1.id == goods2.id)
-	local now = os.time()
 	if goods1.id == "jipaiqi_tian" then
+		local now = os.time()
 		if goods1.expiry_time >= now then
 			goods1.expiry_time = goods1.expiry_time + goods2.num * 24*60*60
 		else

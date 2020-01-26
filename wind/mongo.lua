@@ -94,8 +94,8 @@ function mongo.miss_find_one(coll, ...)
 	end
 end
 
-function mongo.miss_find_one_or_insert(...)
-    local o = mongo.find_one_or_insert(...)
+function mongo.miss_find_one_or_insert(coll, ...)
+    local o = mongo.find_one_or_insert(coll, ...)
     return miss_one(coll, o)
 end
 
