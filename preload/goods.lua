@@ -4,7 +4,7 @@ GOODS = {
 	cj_jiabei = {id = "cj_jiabei", num = 0}
 }
 
-GEN_ZERO_GOODS = function(id, t)
+GOODS_GEN_ZERO = function(id, t)
 	local goods = assert(GOODS[id])
 	local new = table.clone(goods)
 	if t then

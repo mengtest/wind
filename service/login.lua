@@ -5,7 +5,10 @@ local token = require "wind.token"
 local uniqueid = require "wind.uniqueid"
 
 
-
+--
+-- 为了简单, 给电话就给登录了, 并没有校验其他东西
+-- 登录成功, 返回给客户端一个token 用于连接游戏服
+--
 web.post("/login", web.jsonhandle(function(self, req)
 	local tel = assert(self.tel)
 	local u = db.user.find_one({tel = tel}, {_id = false})

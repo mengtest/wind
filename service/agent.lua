@@ -29,12 +29,14 @@ end
 
 function handle.start(id, addr)
     me = db.user.miss_find_one{id = id}
-    me.login_time = os.time()
-    me.login_ip = addr
-    me.loginc = me.loginc + 1
 
     -- load loginc module
     lobby(me, request, command)
+    ec.pub {
+        type = "login",
+        time = os.time(),
+        ip = addr,
+    }
 end
 
 function handle.init()

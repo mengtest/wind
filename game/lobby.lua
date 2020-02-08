@@ -1,5 +1,6 @@
 local db = require "wind.mongo"
 local lobby_active = require "game.lobby_active"
+local ec = require "wind.eventcenter-local"
 
 local function load_moudle(...)
 	lobby_active(...)
@@ -59,10 +60,10 @@ return function (me, request, command)
                 local start_num
                 if goods then
                     start_num = (v.id == "jipaiqi_tian") and goods.expiry_time or goods.num
-                    GOODS_ADD(goods, v)
+                    goods = GOODS_ADD(goods, v)
                 else
                     start_num = 0
-                    goods = GEN_ZERO_GOODS(v.id)
+                    goods = GOODS_GEN_ZERO(v.id)
                     goods = GOODS_ADD(goods, v)
                     table.insert(me.backpack, goods)
                 end
@@ -72,7 +73,7 @@ return function (me, request, command)
                     goods_id = v.id,
                     time = os.time(),
                     start_num = start_num,
-                    end_num = me.diamond,
+                    end_num = end_num,
                     desc = desc
                 }
             end
@@ -89,5 +90,12 @@ return function (me, request, command)
 
 	function command.send2client(name, args)
 	    agent.send_request(name, args)
-	end
+    end
+    
+    -- 处理登录事件
+    ec.sub_once({type = "login"}, function(e)
+        me.login_time = e.time
+        me.login_ip = e.ip
+        me.loginc = me.loginc + 1
+    end)
 end
